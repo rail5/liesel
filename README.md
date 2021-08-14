@@ -2,6 +2,16 @@
 
 Command-line core of BookThief
 
+## Installation
+
+On Ubuntu-based distros, Liesel can be easily installed via the BookThief PPA:
+
+```
+sudo add-apt-repository ppa:rail5/bookthief
+sudo apt-get update
+sudo apt-get install liesel
+```
+
 ## Build Requirements
 
 - Magick++ API (Packages: **graphicsmagick-libmagick-dev-compat** & **libmagick++-6-headers**)
