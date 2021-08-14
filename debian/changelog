@@ -1,0 +1,25 @@
+liesel (2.2) focal; urgency=low
+
+  * Included libfontconfig1-dev in build-deps
+
+ -- rail5 <andrew@rail5.org>  Sat, 14 Aug 2021 17:20:02 -0400
+
+liesel (2.1) focal; urgency=low
+
+  * Patched a silly bug in the build dependencies
+
+ -- rail5 <andrew@rail5.org>  Sat, 14 Aug 2021 16:59:32 -0400
+
+liesel (2.0) focal; urgency=low
+
+  * Liesel has been entirely rewritten to improve performance
+  Longopts are no longer supported
+  Apart from that, everything here is backwards-compatible
+
+ -- rail5 <andrew@rail5.org>  Sat, 14 Aug 2021 15:31:01 -0400
+
+liesel (1.0) focal; urgency=low
+
+  * Initial release
+
+ -- rail5 <andrew@rail5.org>  Wed, 4 Aug 2021 18:13:09 -0400
