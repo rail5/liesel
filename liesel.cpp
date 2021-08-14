@@ -64,6 +64,15 @@ std::vector<std::string> explode(std::string const & s, char delimiter) {
 	return result;
 }
 
+inline bool hasEnding(std::string const &fullString, std::string const &ending) {
+    if (fullString.length() >= ending.length()) {
+        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+    } else {
+        return false;
+    }
+}
+
+
 inline bool is_number(const std::string& s)
 {
     return !s.empty() && std::find_if(s.begin(), 
@@ -317,6 +326,11 @@ int main(int argc,char **argv)
 		return 1;
 	}
 	
+	if (!hasEnding((std::string)infile, ".pdf")) {
+		fprintf(stderr, "Error: At this stage, Liesel only supports PDFs\nPlease look for a future version to support other formats\n");
+		return 1;
+	}
+	
 	if (pageflag == true) {
 	
 		InitializeMagick(*argv);
@@ -337,6 +351,10 @@ int main(int argc,char **argv)
 	if (file_exists(outfile)) {
 		fprintf(stderr, "Error: File %s already exists!\n", outfile);
 		return 1;
+	}
+	
+	if (!hasEnding((std::string)outfile, ".pdf")) {
+		strcat(outfile, ".pdf");
 	}
 	
 	if (rangeflag == true) {
