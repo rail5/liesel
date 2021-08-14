@@ -64,7 +64,7 @@ std::vector<std::string> explode(std::string const & s, char delimiter) {
 	return result;
 }
 
-inline bool hasEnding(std::string const &fullString, std::string const &ending) {
+inline bool hasEnding (std::string const &fullString, std::string const &ending) {
     if (fullString.length() >= ending.length()) {
         return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
     } else {
@@ -317,17 +317,17 @@ int main(int argc,char **argv)
 			}
 			
 	if (infile == NULL) {
-		fprintf(stderr, "%s", helpstring);
+		std::cout << helpstring;
 		return 1;
 	}
 	
 	if (!file_exists(infile)) {
-		fprintf(stderr, "Error: File %s not found\n", infile);
+		std::cout << "Error: File '" << infile << "' not found" << endl;
 		return 1;
 	}
 	
 	if (!hasEnding((std::string)infile, ".pdf")) {
-		fprintf(stderr, "Error: At this stage, Liesel only supports PDFs\nPlease look for a future version to support other formats\n");
+		std::cout << "Error: At this stage, Liesel only supports PDFs\nPlease look for a future version to support other formats" << endl;
 		return 1;
 	}
 	
@@ -339,17 +339,17 @@ int main(int argc,char **argv)
 
 		char counted[33];
 		itoa(countpages(infilestr), counted, 10);
-		printf("%s", counted);
+		std::cout << counted;
 		return 0;
 	}
 	
 	if (outfile == NULL) {
-		fprintf(stderr, "%s", helpstring);
+		std::cout << helpstring;
 		return 1;
 	}
 	
 	if (file_exists(outfile)) {
-		fprintf(stderr, "Error: File %s already exists!\n", outfile);
+		std::cout << "Error: File '" << outfile << "' already exists!" << endl;
 		return 1;
 	}
 	
@@ -361,7 +361,7 @@ int main(int argc,char **argv)
 		std::vector<std::string> rng = explode(rangevalue, '-');
 		
 		if (!is_number(rng[0]) || !is_number(rng[1])) {
-			fprintf(stderr, "Error: Invalid (non-numeric) range '%s'\n", rangevalue);
+			std::cout << "Error: Invalid (non-numeric) range '" << rangevalue << "'" << endl;
 			return 1;
 		}
 		
@@ -370,10 +370,10 @@ int main(int argc,char **argv)
 		rangelength = rangeend - rangestart;
 		
 		if (rangestart >= rangeend || rangestart == 0) {
-			fprintf(stderr, "Error: Invalid range '%s'\n", rangevalue);
+			std::cout << "Error: Invalid range '" << rangevalue << "'" << endl;
 			return 1;
 		} else if (rangelength < 3) {
-			fprintf(stderr, "Error: Range cannot be shorter than 4 pages\n");
+			std::cout << "Error: Range cannot be shorter than 4 pages" << endl;
 			return 1;
 		}
 		
@@ -391,7 +391,7 @@ int main(int argc,char **argv)
 		
 		if (rangeflag == true) {
 			if (rangeend > pagecount) {
-				fprintf(stderr, "Error: Given 'range' value out of range for supplied PDF\n");
+				std::cout << "Error: Given 'range' value out of range for supplied PDF" << endl;
 				return 1;
 			}
 			
@@ -405,11 +405,11 @@ int main(int argc,char **argv)
 		
 		writeImages(pamphlet.begin(), pamphlet.end(), outfile);
 		
-		printf("Done!\n");
+		std::cout << "Done!" << endl;
 	}
 	catch( Exception &error_ )
 	{
-		cout << "Error:\n" << error_.what() << endl;
+		std::cout << "Error:\n" << error_.what() << endl;
 		return 1;
 	}
 	return 0;
