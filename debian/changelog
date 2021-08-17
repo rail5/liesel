@@ -1,3 +1,19 @@
+liesel (3.0) focal; urgency=low
+
+  * Added features: -s and -c
+  -s prints the PDF in segments of given size
+  as in, -s 40, for 40-page segments
+  this produces multiple PDFs
+  -c checks the validity of a given command
+  but does not execute it.
+  Patched a minor bug in -r range values.
+  Moved infile/outfile sanity checks to be
+  within init switch statement.
+  Moved all functions to separate inc files
+
+ -- rail5 <andrew@rail5.org>  Sat, 17 Aug 2021 14:45:12 -0400
+
+
 liesel (2.2) focal; urgency=low
 
   * Included libfontconfig1-dev in build-deps
