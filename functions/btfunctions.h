@@ -21,7 +21,7 @@ int countpages(std::string pdfsource) {
 	return document.GetPageCount();
 }
 
-vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool grayscale) {
+vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool grayscale, bool finalpageblank, bool extrablanks) {
 	Image page;
 	vector<Image> tocombine;
 	
@@ -39,7 +39,7 @@ vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool graysc
 	
 	while (i < ourpages) {
 		char buffer[33];
-		char comd[512] = "";
+		char comd[4096] = "";
 		strcat(comd, pdfsource);
 		strcat(comd, "[");
 		itoa(i, buffer, 10);
@@ -53,18 +53,37 @@ vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool graysc
 		i = i + 1;
 	}
 	
+	if (finalpageblank == true) {
+		size_t width = tocombine[0].columns();
+		size_t height = tocombine[0].rows();
+		
+		Geometry blanksize = Geometry(width, height);
+		
+		Image blank_image(blanksize, Color(MaxRGB, MaxRGB, MaxRGB, 0));
+		
+		tocombine.push_back(blank_image);
+	}
+	
+	if (extrablanks == true) {
+		size_t width = tocombine[0].columns();
+		size_t height = tocombine[0].rows();
+		
+		Geometry blanksize = Geometry(width, height);
+		
+		Image blank_image(blanksize, Color(MaxRGB, MaxRGB, MaxRGB, 0));
+		
+		tocombine.push_back(blank_image);
+		tocombine.push_back(blank_image);
+	}
+	
 	return tocombine;
 }
 
-std::list<Image> makepamphlet(int pgcount, vector<Image> imagelist) {
-	bool finalpageblank = false;
+std::list<Image> makepamphlet(vector<Image> imagelist) {
+
+	int pgcount = imagelist.size();
 	
 	int pgcountfromzero = pgcount - 1;
-	
-	if (pgcount % 2 != 0) {
-		pgcountfromzero = pgcountfromzero + 1;
-		finalpageblank = true;
-	}
 	
 	int first = 0;
 	int second = pgcountfromzero;
@@ -83,35 +102,6 @@ std::list<Image> makepamphlet(int pgcount, vector<Image> imagelist) {
 	newimg = imagelist[0];
 		
 	newimg.resize(newsize);
-	
-	if (finalpageblank == true) {
-		Image blank_image(newsize, Color(MaxRGB, MaxRGB, MaxRGB, 0));
-		newimg.composite(blank_image, 0, 0);
-		newimg.composite(imagelist[first], originalwidth, 0);
-		
-		newimg.rotate(90);
-
-		recollater.push_back(newimg);
-		
-		newimg.rotate(-90);
-		
-		first = first + 1;
-		second = second - 1;
-		
-		if (first <= (pgcountfromzero / 2)) {
-			newimg.composite(imagelist[first], 0, 0);
-			newimg.composite(imagelist[second], originalwidth, 0);
-			
-			newimg.rotate(90);
-
-			recollater.push_back(newimg);
-		
-			newimg.rotate(-90);
-			
-			first = first + 1;
-			second = second - 1;
-		}
-	}
 	
 	while (first <= (pgcountfromzero / 2)) {
 

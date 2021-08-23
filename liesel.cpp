@@ -1,10 +1,10 @@
 /***************************************************************
  * Name:      liesel
- * Version:   3.0
+ * Version:   4.0
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-08-17
+ * Created:   2021-08-23
  * Copyright: rail5 (https://rail5.org)
- * License:   GNU GPL v3.0
+ * License:   GNU GPL V3
  **************************************************************/
 
 #ifndef IOSTREAM
@@ -21,14 +21,62 @@
 
 using namespace std;
 
+bool checkin(char* infile) {
+	// Infile sanity checks written as an isolated function to be used in both -i and -p cases
+	if (!file_exists(infile)) {
+		std::cout << "Error: File '" << infile << "' not found" << endl;
+		return false;
+	}
+	
+	if (!has_ending((std::string)infile, ".pdf")) {
+		std::cout << "Error: At this stage, Liesel only supports PDFs\nPlease look for a future version to support other formats" << endl;
+		return false;
+	}
+	
+	return true;
+}
+
+bool checksegout(std::string outstring, int segments, bool force = false) {
+
+	if (force == true) {
+		return true;
+	}
+
+	// If we're printing in segments, this checks that output-part2.pdf, output-part3.pdf etc don't already exist, so we don't overwrite them
+	int i = 2;
+	while (i <= segments) {
+		char newname[4096]; // 4096 chars is the standard maximum length of a Unix path, with a 255 char maximum file name
+		strcpy(newname, outstring.substr(0, outstring.size()-4).c_str());
+		char counter[33];
+		itoa(i, counter, 10);
+		strcat(newname, "-part");
+		strcat(newname, counter);
+		strcat(newname, ".pdf");
+		if (file_exists(newname)) {
+			std::cout << "Error: File '" << newname << "' already exists!" << endl;
+			return false;
+		}
+		i = i + 1;
+	}
+	
+	return true;
+}
+
 int main(int argc,char **argv)
 {
 
-	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
+	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -f\n    Force overwrites (do not warn about files already existing)\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
+	
+	const char* infostring = "BookThief + Liesel Copyright (C) 2021 rail5\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. Liesel assumes that the input PDF has pages which are all the same size, and won't work right if its pages are all different sizes\n2. BookThief is a GUI frontend which merely makes calls to Liesel\n3. The source code for both programs is freely available online\n4. Liesel depends on ImageMagick and PoDoFo, two other free (GPL V3-compatible) programs\n";
 
 	bool grayscale = false;
 	bool rangeflag = false;
+	bool overwrite = false;
 	bool checkflag = false;
+	bool lastpageblank = false;
+	bool flastpageblank = false;
+	bool extrablanks = false;
+	bool fextrablanks = false;
 	
 	char *infile = NULL;
 	char *outfile = NULL;
@@ -49,9 +97,23 @@ int main(int argc,char **argv)
 		A flag tripped when the user specifies a range with -r
 		If this flag is tripped to return "true," Liesel first checks the validity of the range, and then modifies the call to loadpages() with the range-specific info
 		
+	overwrite:
+		A flag tripped when the user types -f
+		If this flag is tripped to return "true," Liesel doesn't make a fuss about output files already existing, and just overwrites them
+		
 	checkflag:
 		A flag tripped when the user types -c
-		If this flag is tripped to return "true," Liesel checks whether the command is valid, and halts before execution (does NOT execute the command issued). Liesel returns either an error, or "OK"
+		If this flag is tripped to return "true," Liesel checks whether the command is valid, and halts before execution (does NOT execute the command issued). Liesel returns either a specific error, or "OK" (intentionally does not output newline to stdout)
+		
+	lastpageblank / flastpageblank:
+		If Liesel receives an odd number of input pages, this flag is tripped, and a blank page is added to the end to make sure that everything prints correctly
+		
+	extrablanks / fextrablanks:
+		Suppose that the input Liesel gets has a page-count which is not divisible by 4
+		Well, Liesel increments odd page counts by 1 (see lastpageblank above), but even that doesn't guarantee the number will be divisible by 4 --
+			(meaning, 2 pages front & back per sheet of paper)
+		Any printer will simply leave the backside of the final sheet blank -- ie, it will put 2 blank pages right in the middle of your booklet
+		In order to avoid that, this "extrablanks" flag is tripped when the final page count % 4 != 0, and loadpages() "adds" 2 blank pages to the end (ie, really moves them away from the -middle- of your booklet, by adding them to the end of the output PDF file)
 	
 	infile/outfile:
 		Self-explanatory
@@ -81,7 +143,7 @@ int main(int argc,char **argv)
 	
 	opterr = 0;
 	
-	while ((c = getopt(argc, argv, "ci:o:r:s:p:gh")) != -1)
+	while ((c = getopt(argc, argv, "ci:o:r:s:p:ghqf")) != -1)
 		switch(c) {
 			case 'c':
 				checkflag = true;
@@ -89,9 +151,16 @@ int main(int argc,char **argv)
 			case 'g':
 				grayscale = true;
 				break;
+			case 'f':
+				overwrite = true;
+				break;
 			case 'p':
 			{
 				infile = optarg;
+				
+				if (checkin(infile) != true) {
+					return 1;
+				}
 				
 				InitializeMagick(*argv);
 	
@@ -103,37 +172,23 @@ int main(int argc,char **argv)
 					std::cout << "OK";
 					return 0;
 				}
-				std::cout << counted;
+				std::cout << counted; // -p intentionally does not output a newline to stdout
 				return 0;
 				
 				break;
 			}
 			case 'i':
 				infile = optarg;
-				
-				if (!file_exists(infile)) {
-					std::cout << "Error: File '" << infile << "' not found" << endl;
+				if (checkin(infile) != true) {
 					return 1;
 				}
-	
-				if (!has_ending((std::string)infile, ".pdf")) {
-					std::cout << "Error: At this stage, Liesel only supports PDFs\nPlease look for a future version to support other formats" << endl;
-					return 1;
-				}
-				
 				break;
 			case 'o':
 				outfile = optarg;
 				
-				if (file_exists(outfile)) {
-					std::cout << "Error: File '" << outfile << "' already exists!" << endl;
-					return 1;
-				}
-	
 				if (!has_ending((std::string)outfile, ".pdf")) {
 					strcat(outfile, ".pdf");
 				}
-				
 				break;
 			case 'r':
 				rangeflag = true;
@@ -156,8 +211,12 @@ int main(int argc,char **argv)
 				printf("%s", helpstring);
 				return 0;
 				break;
+			case 'q':
+				printf("%s", infostring);
+				return 0;
+				break;
 			case '?':
-				if (optopt == 'i' || optopt == 'o' || optopt == 'r') {
+				if (optopt == 'i' || optopt == 'o' || optopt == 'r' || optopt == 's' || optopt == 'p') {
 					fprintf(stderr, "Option -%c requires an argument\n", optopt);
 				} else if (isprint(optopt)) {
 					fprintf(stderr, "Unknown option `-%c'\n", optopt);
@@ -176,6 +235,11 @@ int main(int argc,char **argv)
 	
 	if (outfile == NULL) {
 		std::cout << helpstring;
+		return 1;
+	}
+	
+	if (file_exists(outfile) && overwrite == false) {
+		std::cout << "Error: File '" << outfile << "' already exists!" << endl;
 		return 1;
 	}
 	
@@ -204,8 +268,7 @@ int main(int argc,char **argv)
 			return 1;
 		}
 		
-		rangestart = rangestart - 1; // preparing for arrays starting at 0
-		
+		rangestart = rangestart - 1; // preparing for arrays starting at 0 (page counts start at 1)
 	}
 	
 	InitializeMagick(*argv);
@@ -222,11 +285,6 @@ int main(int argc,char **argv)
 			
 			pagecount = rangelength + 1;
 			
-		}
-		
-		if (checkflag == true) {
-			std::cout << "OK";
-			return 0;
 		}
 		
 		if (segsize > pagecount || segsize == 0) {
@@ -253,8 +311,40 @@ int main(int argc,char **argv)
 		std::string outstring = (std::string)outfile;
 		
 		if (segcount > 1) {
-			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale);		
-			std::list<Image> pamphlet = makepamphlet(segsize, loaded);
+			if (checksegout(outstring, segcount, overwrite) != true) {
+				return 1;
+			}
+		}
+		
+		if (checkflag == true) {
+			std::cout << "OK";
+			return 0;
+		}
+		
+		int revsegsize = segsize;
+		int revfinalsegsize = finalsegsize;
+		
+		if (segsize % 2 != 0) {
+			lastpageblank = true;
+			revsegsize = segsize + 1;
+		}
+		
+		if (finalsegsize % 2 != 0) {
+			flastpageblank = true;
+			revfinalsegsize = finalsegsize + 1;
+		}
+		
+		if (revsegsize % 4 != 0) {
+			extrablanks = true;
+		}
+		
+		if (revfinalsegsize % 4 != 0) {
+			fextrablanks = true;
+		}
+		
+		if (segcount > 1) {
+			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks);		
+			std::list<Image> pamphlet = makepamphlet(loaded);
 			writeImages(pamphlet.begin(), pamphlet.end(), outfile);
 			
 			double dpercentdone = (double)thisseg/segcount;
@@ -270,7 +360,7 @@ int main(int argc,char **argv)
 			while (thisseg < segcount && thisseg > 1) {
 				firstpage = rangestart + (segsize*(thisseg-1));
 				
-				char newname[256];
+				char newname[4096];
 				strcpy(newname, outstring.substr(0, outstring.size()-4).c_str()); // remove .pdf extension
 				
 				char thiscounter[33];
@@ -280,8 +370,8 @@ int main(int argc,char **argv)
 				strcat(newname, thiscounter);
 				strcat(newname, ".pdf"); //ie, ourfile-part2.pdf
 				
-				loaded = loadpages(segsize, infile, firstpage, grayscale);
-				pamphlet = makepamphlet(segsize, loaded);
+				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks);
+				pamphlet = makepamphlet(loaded);
 				writeImages(pamphlet.begin(), pamphlet.end(), newname);
 				
 				dpercentdone = (double)thisseg/segcount;
@@ -294,16 +384,16 @@ int main(int argc,char **argv)
 			
 			firstpage = rangestart + (segsize*(thisseg-1));
 			
-			char newname[256];
+			char newname[4096];
 			strcpy(newname, outstring.substr(0, outstring.size()-4).c_str());
 			char thiscounter[33];
 			itoa(thisseg, thiscounter, 10);
 			strcat(newname, "-part");
 			strcat(newname, thiscounter);
 			strcat(newname, ".pdf");
-			
-			loaded = loadpages(finalsegsize, infile, firstpage, grayscale);
-			pamphlet = makepamphlet(finalsegsize, loaded);
+
+			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks);
+			pamphlet = makepamphlet(loaded);
 			writeImages(pamphlet.begin(), pamphlet.end(), newname);
 			
 			std::cout << "100%" << endl;
@@ -312,8 +402,8 @@ int main(int argc,char **argv)
 			return 0;
 		}
 		
-		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale);
-		std::list<Image> pamphlet = makepamphlet(finalsegsize, loaded);
+		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks);
+		std::list<Image> pamphlet = makepamphlet(loaded);
 		writeImages(pamphlet.begin(), pamphlet.end(), outfile);
 		
 		std::cout << endl << "Done!" << endl;
