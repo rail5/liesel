@@ -1,3 +1,27 @@
+liesel (4.0) focal; urgency=low
+
+  * Added features: -q and -f
+  -q displays program and copyright info
+  -f forces overwrites, does not warn user
+  about existing files.
+  Bug patched: added infile sanity check
+  to -p command.
+  Bug patched: Swapped order of outfile
+  sanity checks.
+  Bug patched: outfile sanity checks now
+  include -part1.pdf, -part2.pdf, etc
+  if printing in segments.
+  Improvement: Liesel now appends
+  blank pages to the end of the output booklet
+  in the case that the total number of pages
+  is not divisible by 4, where before, any
+  printer would place those blanks in the
+  middle of the printed booklet.
+  Improvement: Liesel is now more efficient
+  in appending blanks when necessary
+
+ -- rail5 <andrew@rail5.org>  Mon, 23 Aug 2021 20:01:13 -0400
+
 liesel (3.0) focal; urgency=low
 
   * Added features: -s and -c
