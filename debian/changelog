@@ -1,3 +1,17 @@
+liesel (4.9) focal; urgency=low
+
+  * Added -v Verbose option
+  Added -b BookThief machine-readable option
+  Like Verbose -v, can also be used in conjunction
+  with -v, but rather than English, it prints
+  a percentage done, which BT then uses to update
+  a progress bar.
+  Cleaned up the code in general (inconsistencies,
+  etc oversights which didn't produce errors, but
+  nevertheless could stand to be cleaned up)
+
+ -- rail5 <andrew@rail5.org>  Wed, 1 Sep 2021 17:51:38 -0400
+
 liesel (4.0) focal; urgency=low
 
   * Added features: -q and -f
@@ -35,7 +49,7 @@ liesel (3.0) focal; urgency=low
   within init switch statement.
   Moved all functions to separate inc files
 
- -- rail5 <andrew@rail5.org>  Sat, 17 Aug 2021 14:45:12 -0400
+ -- rail5 <andrew@rail5.org>  Tue, 17 Aug 2021 14:45:12 -0400
 
 
 liesel (2.2) focal; urgency=low

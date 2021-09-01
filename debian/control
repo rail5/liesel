@@ -1,11 +1,11 @@
 Source: liesel
 Maintainer: rail5 <andrew@rail5.org>
-Build-Depends: debhelper (>= 8.0.0), graphicsmagick-libmagick-dev-compat (>= 1.4+really1.3.35-1), libmagick++-6-headers (>= 8:6.9.10.23+dfsg-2.1ubuntu11.4), libpodofo-dev (>= 0.9.6), libfontconfig1-dev (>= 2.13.1-2ubuntu3)
+Build-Depends: debhelper (>= 8.0.0), graphicsmagick-libmagick-dev-compat, libmagick++-6-headers, libpodofo-dev (>= 0.9.6), libfontconfig1-dev
 Standards-Version: 3.9.3
 Section: utils
 
 Package: liesel
-Version: 4.0
+Version: 4.9
 License: GPL-3.0
 Vendor: rail5 <andrew@rail5.org>
 Priority: optional
@@ -15,3 +15,4 @@ Conflicts: bookthief-liesel
 Description: Command-line core of BookThief
  Prepares PDFs to be home-printed
  in "pamphlet" style
+
