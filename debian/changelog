@@ -1,3 +1,9 @@
+liesel (4.9.1) focal; urgency=low
+
+  * Minor update, updated -h help string
+
+ -- rail5 <andrew@rail5.org>  Wed, 1 Sep 2021 20:15:15 -0400
+
 liesel (4.9) focal; urgency=low
 
   * Added -v Verbose option
