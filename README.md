@@ -18,7 +18,7 @@ sudo apt-get install liesel
 
 - libfontconfig1 (Package: **libfontconfig1-dev**)
 
-- PoDoFo 0.9.6 (Recommended to **compile from source**. This repository includes an optional pre-compiled **libpodofo.a** static library if you want it (the libpodofo-dev package does not include this library, though compiling from source will build it for you))
+- PoDoFo >= 0.9.6 (Package: **libpodofo-dev**) (Recommended to compile from source. This repository includes an optional pre-compiled **libpodofo.a** static library if you want it (the libpodofo-dev package does not include this library, though compiling from source will build it for you))
 
 ## Building
 
