@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   5.0
+ * Version:   5.0.1
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-09-16
+ * Created:   2021-09-17
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -397,6 +397,9 @@ int main(int argc,char **argv)
 		if (segcount > 1) {
 			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);		
 			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+			if (verbose == true) {
+				cout << endl << "Writing to file..." << endl;
+			}
 			writeImages(pamphlet.begin(), pamphlet.end(), outfile);
 			
 			double dpercentdone = (double)thisseg/segcount;

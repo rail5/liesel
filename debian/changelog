@@ -1,3 +1,10 @@
+liesel (5.0.1) focal; urgency=low
+
+  * Added manpage
+  Fixed minor cosmetic error in verbose mode
+
+ -- rail5 <andrew@rail5.org>  Fri, 17 Sep 2021 04:13:32 -0400
+
 liesel (5.0) focal; urgency=low
 
   * Added -d pixel density option

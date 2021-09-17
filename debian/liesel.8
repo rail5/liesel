@@ -1,0 +1,72 @@
+.\" Manpage for liesel
+.\" Contact andrew@rail5.org to correct errors or typos.
+.TH man 8 "17 September 2021" "5.0" "liesel man page"
+.SH NAME
+liesel \- prepare PDFs for booklet-style home-printing
+.SH SYNOPSIS
+liesel -i some-book.pdf -o ready-to-print.pdf
+.SH DESCRIPTION
+Liesel prepares an inputted PDF to be DIY printed at home in pamphlet- or booklet-style
+.SH OPTIONS
+-i
+  Input PDF
+
+-o
+  Output PDF
+
+-g
+  Convert to grayscale (save on printing costs)
+
+-r
+  Print only within specified range
+  e.g: -r 1-12
+
+-s
+  Print output PDFs in segments of a given size
+  e.g: -s 40
+    (produces multiple PDFs)
+
+-d
+  Specify pixels-per-inch density/quality
+  e.g: -d 100
+    (warning: using extremely high values can crash)
+
+-t
+  Transform output PDF to print on a specific size paper
+  e.g: -t us-letter
+
+-f
+  Force overwrites
+    (do not warn about files already existing)
+
+-v
+  Verbose mode
+
+-b
+  Always print percentage done
+    (not only when printing in segments)
+
+-p
+  Count pages of input PDF and exit
+
+-c
+  Check validity of command, and do not execute
+
+-h
+  Print help message
+
+-q
+  Print program info
+
+Examples:
+
+  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf
+  liesel -i some-book.pdf -r 100-300 -s 40 -t a4 -o ready-to-print.pdf
+  liesel -p some-book.pdf
+  liesel -c -i some-book.pdf -vbf -o ready-to-print.pdf
+.SH SEE ALSO
+bookthief
+.SH BUGS
+No known bugs.
+.SH AUTHOR
+rail5 (andrew@rail5.org)
