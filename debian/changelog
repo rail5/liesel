@@ -1,3 +1,16 @@
+liesel (5.0) focal; urgency=low
+
+  * Added -d pixel density option
+  Allows the user to adjust quality
+  in terms of pixels per inch
+  with a 100 ppi minimum
+  Added -t transform option
+  Accepts us-letter and a4 as arguments
+  Auto-resizes the output PDF to conform
+  to those dimensions if requested
+
+ -- rail5 <andrew@rial5.org>  Thu, 16 Sep 2021 20:15:38 -0400
+
 liesel (4.9.1) focal; urgency=low
 
   * Minor update, updated -h help string
