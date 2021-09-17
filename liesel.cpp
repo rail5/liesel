@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   4.9
+ * Version:   5.0
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-09-01
+ * Created:   2021-09-16
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -66,7 +66,7 @@ bool checksegout(string outstring, int segments, bool force = false) {
 int main(int argc,char **argv)
 {
 
-	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Always print percentage done\n      (not only when printing in segments)\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
+	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Always print percentage done\n      (not only when printing in segments)\n\n  -d\n    Specify pixels-per-inch density/quality\n    e.g: -d 100\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n    e.g: -t us-letter\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -t a4 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
 	const char* infostring = "BookThief + Liesel Copyright (C) 2021 rail5\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. Liesel assumes that the input PDF has pages which are all the same size, and won't work right if its pages are all different sizes\n2. BookThief is a GUI frontend which merely makes calls to Liesel\n3. The source code for both programs is freely available online\n4. Liesel depends on ImageMagick and PoDoFo, two other free (GPL V3-compatible) programs\n";
 
@@ -85,11 +85,15 @@ int main(int argc,char **argv)
 	char *outfile = NULL;
 	char *rangevalue = NULL;
 
-	int segsize = 0;	
+	int segsize = 0;
 	int rangestart = 0;
 	int rangeend;
 	int rangelength;
 	
+	int quality = 100;
+	
+	string rescale = "none";
+	const string rescalers[2] = {"us-letter", "a4"};
 	
 	/************
 	grayscale:
@@ -151,12 +155,19 @@ int main(int argc,char **argv)
 		rangeend - rangestart
 		In the above example, this would be 10
 		Uninitialized unless "rangeflag" is tripped
+		
+	quality:
+		Number inputted via -d option
+		Passed to loadpages() function in functions/btfunctions.h
+		Determines Magick++ API's "Quality" measure as well as pixel density
+		Initialized at 100 (default)
+		If input value is less than 100, value remains at 100
 	************/
 	int c;
 	
 	opterr = 0;
 	
-	while ((c = getopt(argc, argv, "ci:o:r:s:p:ghqfvb")) != -1)
+	while ((c = getopt(argc, argv, "ci:o:r:s:p:d:t:ghqfvb")) != -1)
 		switch(c) {
 			case 'c':
 				checkflag = true;
@@ -215,6 +226,30 @@ int main(int argc,char **argv)
 				
 				if (segsize < 4) {
 					cout << "Error: Segment size cannot be shorter than 4 pages" << endl;
+					return 1;
+				}
+				break;
+			case 'd':
+				if (!is_number(optarg)) {
+					cout << "Error: Invalid (non-numeric) pixel density '" << optarg << "'" << endl;
+					return 1;
+				}
+				
+				quality = stoi(optarg);
+				
+				if (quality < 100) {
+					quality = 100;
+				}
+				break;
+			case 't':
+				if (find(begin(rescalers), end(rescalers), optarg) != end(rescalers)) {
+					rescale = optarg;
+				} else {
+					cout << "Error: Unrecognized transform '" << optarg << "'" << endl;
+					cout << "Valid options:" << endl;
+					for (long unsigned int i=0; i<(sizeof(rescalers)/sizeof(*rescalers)); i++) {
+						cout << "  " << rescalers[i] << endl;
+					}
 					return 1;
 				}
 				break;
@@ -360,8 +395,8 @@ int main(int argc,char **argv)
 		}
 		
 		if (segcount > 1) {
-			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg);		
-			list<Image> pamphlet = makepamphlet(loaded, verbose);
+			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);		
+			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
 			writeImages(pamphlet.begin(), pamphlet.end(), outfile);
 			
 			double dpercentdone = (double)thisseg/segcount;
@@ -384,8 +419,11 @@ int main(int argc,char **argv)
 				strcat(newname, thiscounter);
 				strcat(newname, ".pdf"); //ie, ourfile-part2.pdf
 				
-				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg);
-				pamphlet = makepamphlet(loaded, verbose);
+				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);
+				pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+				if (verbose == true) {
+					cout << endl << "Writing to file..." << endl;
+				}
 				writeImages(pamphlet.begin(), pamphlet.end(), newname);
 				
 				dpercentdone = (double)thisseg/segcount;
@@ -406,8 +444,11 @@ int main(int argc,char **argv)
 			strcat(newname, thiscounter);
 			strcat(newname, ".pdf");
 
-			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg);
-			pamphlet = makepamphlet(loaded, verbose);
+			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
+			pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+			if (verbose == true) {
+				cout << endl << "Writing to file..." << endl;
+			}
 			writeImages(pamphlet.begin(), pamphlet.end(), newname);
 			
 			cout << "100%" << endl;
@@ -416,8 +457,11 @@ int main(int argc,char **argv)
 			return 0;
 		}
 		
-		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg);
-		list<Image> pamphlet = makepamphlet(loaded, verbose);
+		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
+		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+		if (verbose == true) {
+			cout << endl << "Writing to file..." << endl;
+		}
 		writeImages(pamphlet.begin(), pamphlet.end(), outfile);
 		
 		cout << endl << "Done!" << endl;
