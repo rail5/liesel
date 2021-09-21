@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   5.0.1
+ * Version:   5.0.2
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-09-17
+ * Created:   2021-09-20
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -161,7 +161,17 @@ int main(int argc,char **argv)
 		Passed to loadpages() function in functions/btfunctions.h
 		Determines Magick++ API's "Quality" measure as well as pixel density
 		Initialized at 100 (default)
-		If input value is less than 100, value remains at 100
+		If input value is less than 75, quality is set to 75
+		(Lower values can cause trouble with Magick++)
+		Recommended not to use values higher than 300 (could crash, uses up a lot of memory -- if your computer can handle it, then by all means, go for it)
+	
+	rescale:
+		String initialized as "none," if user specifies paper size with -t, replaced with that input
+		This string is then passed to mayberescale() in functions/btfunctions.h
+	
+	rescalers:
+		Acceptable values for rescale
+		At the moment: us-letter, a4
 	************/
 	int c;
 	
@@ -237,8 +247,8 @@ int main(int argc,char **argv)
 				
 				quality = stoi(optarg);
 				
-				if (quality < 100) {
-					quality = 100;
+				if (quality < 75) {
+					quality = 75;
 				}
 				break;
 			case 't':

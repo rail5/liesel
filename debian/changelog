@@ -1,3 +1,12 @@
+liesel (5.0.2) focal; urgency=low
+
+  * Changed minimum -d value to 75
+  Values lower than 75 are prone to errors
+  But, since 75 is possible, then if the
+  user wants it, why not allow it
+
+ -- rail5 <andrew@rail5.org>  Mon, 20 Sep 2021 21:00:12 -0400
+
 liesel (5.0.1) focal; urgency=low
 
   * Added manpage
