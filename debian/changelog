@@ -1,3 +1,18 @@
+liesel (5.0.3) focal; urgency=low
+
+  * Patched bug resulting from oversight
+  Formerly, all rescales assumed 100 PPI
+  But the -d option allows the user to change
+  The document PPI resolution
+  This would have meant that documents with
+  A PPI that was not a multiple of 100
+  (For example, liesel -d 175)
+  Would not rescale properly
+  The mayberescale() function now checks
+  The PPI before rescaling
+
+ -- rail5 <andrew@rail5.org>  Wed, 29 Sep 2021 15:42:07 -0400
+
 liesel (5.0.2) focal; urgency=low
 
   * Changed minimum -d value to 75

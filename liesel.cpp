@@ -406,7 +406,7 @@ int main(int argc,char **argv)
 		
 		if (segcount > 1) {
 			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);		
-			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
@@ -433,7 +433,7 @@ int main(int argc,char **argv)
 				strcat(newname, ".pdf"); //ie, ourfile-part2.pdf
 				
 				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);
-				pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+				pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
 				if (verbose == true) {
 					cout << endl << "Writing to file..." << endl;
 				}
@@ -458,7 +458,7 @@ int main(int argc,char **argv)
 			strcat(newname, ".pdf");
 
 			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
-			pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+			pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
@@ -471,7 +471,7 @@ int main(int argc,char **argv)
 		}
 		
 		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
-		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, verbose);
+		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
 		if (verbose == true) {
 			cout << endl << "Writing to file..." << endl;
 		}

@@ -178,7 +178,7 @@ vector<Image> makepamphlet(vector<Image> imagelist, bool verbose) {
 	
 }
 
-vector<Image> mayberescale(vector<Image> pamphlet, string rescaler, bool verbose) {
+vector<Image> mayberescale(vector<Image> pamphlet, string rescaler, int quality, bool verbose) {
 
 	int pagecount = pamphlet.size();
 	
@@ -194,20 +194,22 @@ vector<Image> mayberescale(vector<Image> pamphlet, string rescaler, bool verbose
 		size_t heightmults[10];
 		
 		if (rescaler == "us-letter") {
+			//In the case of 100 PPI:
 			//{850, 1700, 2550, 3400, 4250, 5100, 5950, 6800, 7650, 8500};
 			//{1100, 2200, 3300, 4400, 5500, 6600, 7700, 8800, 9900, 11000};
 			
 			for (int x=0; x<10; x++) {
-				widthmults[x] = (x+1)*850;
-				heightmults[x] = (x+1)*1100;
+				widthmults[x] = (x+1)*(quality*8.5);
+				heightmults[x] = (x+1)*(quality*11);
 			}
 		} else if (rescaler == "a4") {
+			//In the case of 100 PPI:
 			//{830, 1660, 2490, 3320, 4150, 4980, 5810, 6640, 7470, 8300};
 			//{1170, 2340, 3510, 4680, 5850, 7020, 8190, 9360, 10530, 11700};
 			
 			for (int x=0; x<10; x++) {
-				widthmults[x] = (x+1)*830;
-				heightmults[x] = (x+1)*1170;
+				widthmults[x] = (x+1)*(quality*8.3);
+				heightmults[x] = (x+1)*(quality*11.7);
 			}
 		}
 		
