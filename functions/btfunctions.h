@@ -178,14 +178,14 @@ vector<Image> makepamphlet(vector<Image> imagelist, bool verbose) {
 	
 }
 
-vector<Image> mayberescale(vector<Image> pamphlet, string rescaler, int quality, bool verbose) {
+vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwidth, double outheight, int quality, bool verbose) {
 
 	int pagecount = pamphlet.size();
 	
 	size_t width = pamphlet[0].columns();
 	size_t height = pamphlet[0].rows();
 
-	if (rescaler != "none") {
+	if (rescaling) {
 	
 		size_t newwidth = width;
 		size_t newheight = height;
@@ -193,33 +193,19 @@ vector<Image> mayberescale(vector<Image> pamphlet, string rescaler, int quality,
 		size_t widthmults[10];
 		size_t heightmults[10];
 		
-		if (rescaler == "us-letter") {
-			//In the case of 100 PPI:
-			//{850, 1700, 2550, 3400, 4250, 5100, 5950, 6800, 7650, 8500};
-			//{1100, 2200, 3300, 4400, 5500, 6600, 7700, 8800, 9900, 11000};
-			
-			for (int x=0; x<10; x++) {
-				widthmults[x] = (x+1)*(quality*8.5);
-				heightmults[x] = (x+1)*(quality*11);
-			}
-		} else if (rescaler == "a4") {
-			//In the case of 100 PPI:
-			//{830, 1660, 2490, 3320, 4150, 4980, 5810, 6640, 7470, 8300};
-			//{1170, 2340, 3510, 4680, 5850, 7020, 8190, 9360, 10530, 11700};
-			
-			for (int x=0; x<10; x++) {
-				widthmults[x] = (x+1)*(quality*8.3);
-				heightmults[x] = (x+1)*(quality*11.7);
-			}
+		for (int x=0; x<10; x++) {
+			widthmults[x] = (x+1)*(quality*outwidth);
+			heightmults[x] = (x+1)*(quality*outheight);
 		}
+
 		
 		int i = 0;
-		while (i < (sizeof(widthmults)/sizeof(*widthmults))) {				
+		while (i < (sizeof(widthmults)/sizeof(*widthmults))) {
 			if ((width <= widthmults[i]) || (height <= heightmults[i])) {
 				newwidth = widthmults[i];
 				newheight = heightmults[i];
 				if (verbose == true) {
-					cout << endl << "Rescaling to " << newwidth << "x" << newheight << " for " << rescaler << " paper" << endl;
+					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
 				}
 				i = (sizeof(widthmults)/sizeof(*widthmults)) + 1; // sneaky return
 			}
@@ -230,7 +216,7 @@ vector<Image> mayberescale(vector<Image> pamphlet, string rescaler, int quality,
 				newwidth = widthmults[i];
 				newheight = heightmults[i];
 				if (verbose == true) {
-					cout << endl << "Rescaling to " << newwidth << "x" << newheight << " for " << rescaler << " paper" << endl;
+					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
 				}
 				i = (sizeof(widthmults)/sizeof(*widthmults)) + 1; // sneaky return
 			}

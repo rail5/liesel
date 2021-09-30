@@ -1,3 +1,13 @@
+liesel (5.1) focal; urgency=low
+
+  * Added option for custom -t sizes
+  to be specified in inchesXinches
+  In so doing, also improved efficiency
+  in handling the transform presets
+  which were already in place
+
+ -- rail5 <andrew@rail5.org>  Thu, 30 Sep 2021 17:56:12 -0400
+
 liesel (5.0.3) focal; urgency=low
 
   * Patched bug resulting from oversight

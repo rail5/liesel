@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   5.0.2
+ * Version:   5.1
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-09-20
+ * Created:   2021-09-30
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -19,6 +19,7 @@
 #include "functions/is_number.h"
 #include "functions/file_exists.h"
 #include "functions/btfunctions.h"
+#include "functions/is_decimal.h"
 
 using namespace std;
 
@@ -66,7 +67,7 @@ bool checksegout(string outstring, int segments, bool force = false) {
 int main(int argc,char **argv)
 {
 
-	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Always print percentage done\n      (not only when printing in segments)\n\n  -d\n    Specify pixels-per-inch density/quality\n    e.g: -d 100\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n    e.g: -t us-letter\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -t a4 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
+	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Always print percentage done\n      (not only when printing in segments)\n\n  -d\n    Specify pixels-per-inch density/quality\n    e.g: -d 100\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n    e.g: -t us-letter\n    or: -t 8.5x11\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -t a4 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
 	const char* infostring = "BookThief + Liesel Copyright (C) 2021 rail5\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. Liesel assumes that the input PDF has pages which are all the same size, and won't work right if its pages are all different sizes\n2. BookThief is a GUI frontend which merely makes calls to Liesel\n3. The source code for both programs is freely available online\n4. Liesel depends on ImageMagick and PoDoFo, two other free (GPL V3-compatible) programs\n";
 
@@ -91,9 +92,19 @@ int main(int argc,char **argv)
 	int rangelength;
 	
 	int quality = 100;
+
+	bool rescaling = false;
+	double outwidth;
+	double outheight;
+	map<string, double> widthpresets;
+	map<string, double> heightpresets;
 	
-	string rescale = "none";
-	const string rescalers[2] = {"us-letter", "a4"};
+	widthpresets["us-letter"] = 8.5;
+	heightpresets["us-letter"] = 11;
+	
+	widthpresets["a4"] = 8.3;
+	heightpresets["a4"] = 11.7;
+
 	
 	/************
 	grayscale:
@@ -165,13 +176,11 @@ int main(int argc,char **argv)
 		(Lower values can cause trouble with Magick++)
 		Recommended not to use values higher than 300 (could crash, uses up a lot of memory -- if your computer can handle it, then by all means, go for it)
 	
-	rescale:
-		String initialized as "none," if user specifies paper size with -t, replaced with that input
-		This string is then passed to mayberescale() in functions/btfunctions.h
-	
-	rescalers:
-		Acceptable values for rescale
-		At the moment: us-letter, a4
+	rescaling / outwidth/outheight / widthpresets / heightpresets:
+		The first: A boolean activated if the user types -t
+		The second (pair): The width/height in inches to transform to
+		The third (pair): A set of presets (currently us-letter and a4)
+		The first and second(pair) are passed to mayberescale() in functions/btfunctions.h
 	************/
 	int c;
 	
@@ -252,15 +261,30 @@ int main(int argc,char **argv)
 				}
 				break;
 			case 't':
-				if (find(begin(rescalers), end(rescalers), optarg) != end(rescalers)) {
-					rescale = optarg;
-				} else {
-					cout << "Error: Unrecognized transform '" << optarg << "'" << endl;
-					cout << "Valid options:" << endl;
-					for (long unsigned int i=0; i<(sizeof(rescalers)/sizeof(*rescalers)); i++) {
-						cout << "  " << rescalers[i] << endl;
+				if (!widthpresets[optarg]) {
+				
+					vector<string> customsize = explode(optarg, 'x');
+		
+					if (customsize.size() < 2 || !is_decimal(customsize[0]) || !is_decimal(customsize[1])) {
+						cout << "Error: Unrecognized transform '" << optarg << "'" << endl;
+						cout << "Valid options:" << endl;
+					
+						map<string, double>::iterator iter = heightpresets.begin();
+						while (iter != heightpresets.end()) {
+							cout << " " << iter->first << endl;
+							iter++;
+						}
+						return 1;
 					}
-					return 1;
+					
+					rescaling = true;
+					outwidth = stod(customsize[0]);
+					outheight = stod(customsize[1]);
+					
+				} else {
+					rescaling = true;
+					outwidth = widthpresets[optarg];
+					outheight = heightpresets[optarg];
 				}
 				break;
 			case 'v':
@@ -406,7 +430,7 @@ int main(int argc,char **argv)
 		
 		if (segcount > 1) {
 			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);		
-			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
+			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
@@ -433,7 +457,7 @@ int main(int argc,char **argv)
 				strcat(newname, ".pdf"); //ie, ourfile-part2.pdf
 				
 				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);
-				pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
+				pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
 				if (verbose == true) {
 					cout << endl << "Writing to file..." << endl;
 				}
@@ -458,7 +482,7 @@ int main(int argc,char **argv)
 			strcat(newname, ".pdf");
 
 			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
-			pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
+			pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
@@ -471,7 +495,7 @@ int main(int argc,char **argv)
 		}
 		
 		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
-		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescale, quality, verbose);
+		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
 		if (verbose == true) {
 			cout << endl << "Writing to file..." << endl;
 		}

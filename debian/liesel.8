@@ -1,8 +1,8 @@
 .\" Manpage for liesel
 .\" Contact andrew@rail5.org to correct errors or typos.
-.TH man 8 "17 September 2021" "5.0" "liesel man page"
+.TH man 8 "30 September 2021" "5.1" "liesel man page"
 .SH NAME
-liesel \- prepare PDFs for booklet-style home-printing
+liesel
 .SH SYNOPSIS
 liesel -i some-book.pdf -o ready-to-print.pdf
 .SH DESCRIPTION
@@ -33,7 +33,10 @@ Liesel prepares an inputted PDF to be DIY printed at home in pamphlet- or bookle
 
 -t
   Transform output PDF to print on a specific size paper
+  Either the "us-letter" or "a4" presets can be specified, or a custom size (in inches)
   e.g: -t us-letter
+  or: -t 8.5x11
+
 
 -f
   Force overwrites
