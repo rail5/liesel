@@ -1,3 +1,10 @@
+liesel (5.1.1) focal; urgency=low
+
+  * Patched divide-by-zero bug
+  in progress counter
+
+ -- rail5 <andrew@rail5.org>  Tue, 5 Oct 2021 22:57:30 -0400
+
 liesel (5.1) focal; urgency=low
 
   * Added option for custom -t sizes

@@ -385,7 +385,7 @@ int main(int argc,char **argv)
 			finalsegsize = pagecount % segsize;
 		}
 		
-		if (finalsegsize < 4) {
+		if (finalsegsize < 4 && segcount > 1) {
 			segcount = segcount - 1;
 			finalsegsize = (pagecount % segsize) + segsize;
 		}
