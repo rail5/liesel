@@ -10,8 +10,7 @@ License: GPL-3.0
 Vendor: rail5 <andrew@rail5.org>
 Priority: optional
 Architecture: any
-Depends: libbsd0 (>= 0.10.0-1), libicu66 (>= 66.1-2ubuntu2), libxdmcp6 (>= 1:1.1.3-0ubuntu1), libxau6 (>= 1:1.0.9-0ubuntu1), libxcb1 (>= 1.14-2), liblzma5 (>= 5.2.4-1ubuntu1), libuuid1 (>= 2.34-0.1ubuntu9.1), libexpat1 (>= 2.2.9-1build1), libc6 (>= 2.31-0ubuntu9.2), libgcc-s1 (>= 10.3.0-1ubuntu1~20.04), libstdc++6 (>= 10.3.0-1ubuntu1~20.04), libgomp1 (>= 10.3.0-1ubuntu1~20.04), libzstd1 (>= 1.4.4+dfsg-3ubuntu0.1), libxml2 (>= 2.9.10+dfsg-5ubuntu0.20.04.1), libbz2-1.0 (>= 1.0.8-2), libx11-6 (>= 2:1.6.9-2ubuntu1.2), libxext6 (>= 2:1.3.4-0ubuntu1), libwmf0.2-7 (>= 0.2.8.4-17ubuntu1), libpng16-16 (>= 1.6.37-2), libtiff5 (>= 4.1.0+git191117-2ubuntu0.20.04.1), liblcms2-2 (>= 2.9-4), libwebp6 (>= 0.6.1-2ubuntu0.20.04.1), libwebpmux3 (>= 0.6.1-2ubuntu0.20.04.1), libjbig0 (>= 2.1-3.1build1), zlib1g (>= 1:1.2.11.dfsg-2ubuntu1.2), libjpeg-turbo8 (>= 2.0.3-0ubuntu1.20.04.1), libfontconfig1 (>= 2.13.1-2ubuntu3), libfreetype6 (>= 2.10.1-2ubuntu0.1), libssl1.1 (>= 1.1.1f-1ubuntu2.5), libpodofo0.9.6 | libpodofo0.9.7, libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12
-Conflicts: bookthief-liesel
+Depends: libbsd0, libicu66 | libicu67, libxdmcp6, libxau6, libxcb1, liblzma5, libuuid1, libexpat1, libc6, libgcc-s1, libstdc++6, libgomp1, libzstd1, libxml2, libbz2-1.0, libx11-6, libxext6, libwmf0.2-7, libpng16-16, libtiff5, liblcms2-2, libwebp6, libwebpmux3, libjbig0, zlib1, libjpeg-turbo8 | libjpeg62-turbo, libfontconfig1, libfreetype6, libssl1.1, libpodofo0.9.6 | libpodofo0.9.7, libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12
 Description: Command-line core of BookThief
  Prepares PDFs to be home-printed
  in "pamphlet" style
