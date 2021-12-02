@@ -26,6 +26,16 @@ Liesel prepares an inputted PDF to be DIY printed at home in pamphlet- or bookle
   e.g: -s 40
     (produces multiple PDFs)
 
+-m
+  Specify minimum segment size for output PDFs (default minimum is 4)
+  e.g: -m 8
+    if the final segment is shorter than the specified minimum, those pages get 'tacked on' to the penultimate segment
+    for example:
+      liesel -i somefile.pdf -r 1-47 -s 20 -m 4
+        results in 2 segments of 20 pages, + 1 segment of 7 pages
+      liesel -i somefile.pdf -r 1-47 -s 20 -m 8
+        results in 1 segment of 20 pages, + 1 segment of 27 pages
+
 -d
   Specify pixels-per-inch density/quality
   e.g: -d 100

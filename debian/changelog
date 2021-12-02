@@ -1,3 +1,19 @@
+liesel (5.2) focal; urgency=low
+
+  * Added -m minimum segment size option
+  was previously hardcoded to 4
+  now defaults to 4, but can be overrided with -m
+  Liesel now clears unneeded memory early for better performance
+  in segmented printing, vectors for loaded pages previously
+  did not clear until they were overwritten
+  this led to considerable RAM usage beyond the point where
+  that RAM usage was necessary
+  now, that memory is cleared ASAP
+  Replaced C string functions with C++ equivalents for consistency in code
+  Error messages now piped to cerr rather than cout
+
+ -- rail5 <andrew@rail5.org>  Wed, 1 Dec 2021 21:24:39 -0500
+
 liesel (5.1.1) focal; urgency=low
 
   * Patched divide-by-zero bug

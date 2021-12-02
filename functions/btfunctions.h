@@ -45,13 +45,8 @@ vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool graysc
 	int ourpages = i + pgcount;
 	
 	while (i < ourpages) {
-		char buffer[33];
-		char comd[4096] = "";
-		strcat(comd, pdfsource);
-		strcat(comd, "[");
-		itoa(i, buffer, 10);
-		strcat(comd, buffer);
-		strcat(comd, "]");
+		string comd(pdfsource);
+		comd = comd + "[" + to_string(i) + "]";
 		
 		page.read(comd);
 		
@@ -207,7 +202,7 @@ vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwid
 				if (verbose == true) {
 					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
 				}
-				i = (sizeof(widthmults)/sizeof(*widthmults)) + 1; // sneaky return
+				break;
 			}
 					
 			if ((width - widthmults[i] >= 200) || (height - heightmults[i] >= 200)) {
@@ -218,7 +213,7 @@ vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwid
 				if (verbose == true) {
 					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
 				}
-				i = (sizeof(widthmults)/sizeof(*widthmults)) + 1; // sneaky return
+				break;
 			}
 		}
 		
