@@ -26,21 +26,6 @@ All listed features are optional. A simple command like *liesel -i somebook.pdf 
 
 The manpage and *liesel -h* will provide a comprehensive list of options and how to use them
 
-## Some small notes
-
-To print like this, of course, the pages have to go in a certain order. That order is:
-
-last-page + first-page, second-page + second-to-last-page, third-to-last-page + third page, etc.
-
-So, with 12 pages, it would be: 12,1,2,11,10,3,4,9,8,5,6,7
-
-One consequence of this is that the number of pages needs to be even -- further, it should even be divisible by 4 (*4 pages per sheet of paper*).
-
-In the case that a given input is not even or not divisible by 4, say for example that you have 14 pages, Liesel will add 2 blanks to the end. If these blanks were not added, your printer would use 4 sheets of paper and leave the backside of the final sheet blank -- this would place 2 blank pages in the middle of your booklet when you fold it over. By shifting things around, Liesel places them at the end of your booklet instead, where they make more sense. Of course, if you supply an odd number of pages, which when incremented by 1 yield an even number divisible by 4, Liesel will only add 1 blank. Likewise, if you supply an odd number which must be incremented by 3, it will add 3 blanks.
-
-If you're concerned that you might end up paying a lot of money for ink -- *ink* is dirt-cheap, the cartridges are what cost (it's a big scam). You can refill your own cartridges (and there are also printers sold which are designed to be refilled, if you do have the money for one).
-
-I've personally home-printed somewhere around a dozen novels using Liesel at the time of writing (2021-12-02) and use Liesel to print the news almost every day, at virtually no cost, by just refilling my printer's ink cartridges. With all the money that used to go to public libraries now being moved to (insert **current** war here), this program serves pretty well
 
 ## Installation
 
@@ -73,3 +58,19 @@ Static linking (must compile PoDoFo from source to obtain a static library):
 make static
 sudo make install
 ```
+
+## Some small notes
+
+To print like this, of course, the pages have to go in a certain order. That order is:
+
+last-page + first-page, second-page + second-to-last-page, third-to-last-page + third page, etc.
+
+So, with 12 pages, it would be: 12,1,2,11,10,3,4,9,8,5,6,7
+
+One consequence of this is that the number of pages needs to be even -- further, it should even be divisible by 4 (*4 pages per sheet of paper*).
+
+In the case that a given input is not even or not divisible by 4, say for example that you have 14 pages, Liesel will add 2 blanks to the end. If these blanks were not added, your printer would use 4 sheets of paper and leave the backside of the final sheet blank -- this would place 2 blank pages in the middle of your booklet when you fold it over. By shifting things around, Liesel places them at the end of your booklet instead, where they make more sense. Of course, if you supply an odd number of pages, which when incremented by 1 yield an even number divisible by 4, Liesel will only add 1 blank. Likewise, if you supply an odd number which must be incremented by 3, it will add 3 blanks.
+
+If you're concerned that you might end up paying a lot of money for ink -- *ink* is dirt-cheap, the cartridges are what cost (it's a big scam). You can refill your own cartridges (and there are also printers sold which are designed to be refilled, if you do have the money for one).
+
+I've personally home-printed somewhere around a dozen novels using Liesel at the time of writing (2021-12-02) and use Liesel to print the news almost every day, at virtually no cost, by just refilling my printer's ink cartridges. With all the money that used to go to public libraries now being moved to (insert **current** war here), this program serves pretty well
