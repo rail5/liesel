@@ -1,3 +1,9 @@
+liesel (5.2.1) focal; urgency=low
+
+  * Fixed typo in runtime dependencies
+
+ -- rail5 <andrew@rail5.org>  Thu, 2 Dec 2021 00:33:12 -0500
+
 liesel (5.2) focal; urgency=low
 
   * Added -m minimum segment size option
