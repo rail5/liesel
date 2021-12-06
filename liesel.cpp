@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   5.2
+ * Version:   5.2.2
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-12-01
+ * Created:   2021-12-06
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -249,10 +249,6 @@ int main(int argc,char **argv)
 				break;
 			case 'o':
 				outfile = optarg;
-				
-				if (!has_ending((string)outfile, ".pdf")) {
-					strcat(outfile, ".pdf");
-				}
 				break;
 			case 'r':
 				rangeflag = true;
@@ -360,8 +356,14 @@ int main(int argc,char **argv)
 		return 1;
 	}
 	
-	if (file_exists(outfile) && overwrite == false) {
-		cerr << "Error: File '" << outfile << "' already exists!" << endl;
+	string outstring = (string)outfile;
+	
+	if (!has_ending(outstring, ".pdf")) {
+		outstring = outstring + ".pdf";
+	}
+	
+	if (file_exists(outstring) && overwrite == false) {
+		cerr << "Error: File '" << outstring << "' already exists!" << endl;
 		return 1;
 	}
 	
@@ -430,8 +432,6 @@ int main(int argc,char **argv)
 		
 		int firstpage = rangestart;
 		
-		string outstring = (string)outfile;
-		
 		if (segcount > 1) {
 			if (checksegout(outstring, segcount, overwrite) != true) {
 				return 1;
@@ -470,7 +470,7 @@ int main(int argc,char **argv)
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
-			writeImages(pamphlet.begin(), pamphlet.end(), outfile);
+			writeImages(pamphlet.begin(), pamphlet.end(), outstring);
 			
 			loaded.clear();
 			pamphlet.clear(); // clear memory early for the sake of the user's machine
@@ -529,7 +529,7 @@ int main(int argc,char **argv)
 		if (verbose == true) {
 			cout << endl << "Writing to file..." << endl;
 		}
-		writeImages(pamphlet.begin(), pamphlet.end(), outfile);
+		writeImages(pamphlet.begin(), pamphlet.end(), outstring);
 		
 		cout << endl << "Done!" << endl;
 		return 0;
