@@ -1,3 +1,12 @@
+liesel (5.2.3) focal; urgency=low
+
+  * More improvements in memory management
+  Change to makepamphlet() function now clears
+  more unneeded memory after use, reducing
+  peak memory usage by an average of fifty percent
+
+ -- rail5 <andrew@rail5.org>  Sat, 6 Dec 2021 22:42:33 -0500
+
 liesel (5.2.2) focal; urgency=low
 
   * Found and patched major bug

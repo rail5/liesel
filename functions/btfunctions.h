@@ -103,7 +103,7 @@ vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool graysc
 	return tocombine;
 }
 
-vector<Image> makepamphlet(vector<Image> imagelist, bool verbose) {
+vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose) {
 
 	int pgcount = imagelist.size();
 	
@@ -130,8 +130,8 @@ vector<Image> makepamphlet(vector<Image> imagelist, bool verbose) {
 	while (first <= (pgcountfromzero / 2)) {
 
 		
-		newimg.composite(imagelist[second], 0, 0);
-		newimg.composite(imagelist[first], originalwidth, 0);
+		newimg.composite(imagelist[imagelist.size()-1], 0, 0);
+		newimg.composite(imagelist[0], originalwidth, 0);
 
 		newimg.rotate(90);
 
@@ -143,12 +143,15 @@ vector<Image> makepamphlet(vector<Image> imagelist, bool verbose) {
 		
 		newimg.rotate(-90);
 		
+		imagelist.pop_back();
+		imagelist.erase(imagelist.begin());
+		
 		first = first + 1;
 		second = second - 1;
 		
 		if (first <= (pgcountfromzero / 2)) {
-			newimg.composite(imagelist[first], 0, 0);
-			newimg.composite(imagelist[second], originalwidth, 0);
+			newimg.composite(imagelist[0], 0, 0);
+			newimg.composite(imagelist[imagelist.size()-1], originalwidth, 0);
 			
 			newimg.rotate(90);
 
@@ -159,6 +162,9 @@ vector<Image> makepamphlet(vector<Image> imagelist, bool verbose) {
 			}
 		
 			newimg.rotate(-90);
+			
+			imagelist.pop_back();
+			imagelist.erase(imagelist.begin());
 			
 			first = first + 1;
 			second = second - 1;
