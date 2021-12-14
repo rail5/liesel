@@ -43,7 +43,7 @@ sudo apt-get install liesel
 
 - libfontconfig1 (Package: **libfontconfig1-dev**)
 
-- Poppler >= 0.9.6 (Package: **libpoppler-cpp-dev**)
+- Poppler (Package: **libpoppler-cpp-dev**)
 
 ## Building
 
