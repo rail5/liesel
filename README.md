@@ -43,19 +43,12 @@ sudo apt-get install liesel
 
 - libfontconfig1 (Package: **libfontconfig1-dev**)
 
-- PoDoFo >= 0.9.6 (Package: **libpodofo-dev**) (Compile PoDoFo from source if you would like to do static linking, the libpodofo-dev package does not provide a static library)
+- Poppler >= 0.9.6 (Package: **libpoppler-cpp-dev**)
 
 ## Building
 
 ```
 make
-sudo make install
-```
-
-Static linking (must compile PoDoFo from source to obtain a static library):
-
-```
-make static
 sudo make install
 ```
 

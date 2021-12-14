@@ -3,52 +3,89 @@
 #include <Magick++.h>
 #endif
 
-#include <podofo/podofo.h>
+#include <poppler/cpp/poppler-global.h>
+#include <poppler/cpp/poppler-document.h>
+#include <poppler/cpp/poppler-page.h>
+#include <poppler/cpp/poppler-image.h>
+#include <poppler/cpp/poppler-page-renderer.h>
+
 
 #include <memory>
 using namespace std;
 using namespace Magick;
 
-int countpages(string infile, bool verbose) {
-	PoDoFo::PdfError::EnableLogging(false);
-	PoDoFo::PdfError::EnableDebug(false);
+int countpages(string infile, bool verbose, bool checkflag) {
+	poppler::document* document = poppler::document::load_from_file(infile.c_str());
 	
-	PoDoFo::PdfMemDocument document;
-	
-	document.Load(infile.c_str());
-	
-	if (verbose == true) {
-		cout << "Pages counted: " << document.GetPageCount() << "\n";
+	if (verbose == true && checkflag == false) {
+		cout << "Pages counted: " << document->pages() << "\n";
 	}
 	
-	return document.GetPageCount();
+	return document->pages();
 }
 
-vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool grayscale, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality) {
-	Image page;
+void progresscounter(int prog, int stage, int numstages, int segcount, int thisseg) {
+	int progcounter = (prog / numstages) + ((stage - 1) * (100 / numstages)); // calculate initial value
+	
+	progcounter = (progcounter / segcount) + ((thisseg - 1) * (100 / segcount)); // divide it based on how many segments we're printing
+	
+	bool subtractor = progcounter;
+	
+			/*
+			We always want to subtract '1' from the progress counter to accommodate the time it takes to write to a file
+			ie, 25% in processing, but we're writing 4 segments, so '25%' should be reserved for when that file
+			is done being written, so we decrement to '24%.'
+			
+			However, if the progress counter is currently at '0%', subtracting '1' can cause errors if the result ('-1%')
+			is later processed by another program (for example, the BookThief GUI, which updates a graphical progress bar
+			from this output)
+			
+			So, we feed the progress counter into a boolean type
+			
+			If you feed any number greater than 0 into a boolean type, it returns 1
+			If you feed 0 into a boolean type, it returns 0
+			
+			We then subtract the result from the progress counter (ie, 0 minus 0 or 1,2,3,etc minus 1)
+			
+			The 2nd law of *nix programming:
+			Expect the output of your program to become the input of another, as yet unknown, program. Write programs to
+			work together
+			*/
+	
+	cout << progcounter-subtractor << "%" << endl;
+}
+
+vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, bool grayscale, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality, int numstages) {
+
 	vector<Image> tocombine;
 	
-	page.quality(quality);
-	page.resolutionUnits(PixelsPerInchResolution);
-	page.density(Geometry(quality,quality));
-	page.matte(false);
+	poppler::document* document = poppler::document::load_from_file(pdfsource.c_str());
 	
-	if (grayscale == true) {
-		page.type(GrayscaleType);
-	}
+	int ourpages = startfrom + pgcount;
 	
 	if (verbose == true) {
 		cout << "Ready to load PDF pages\n";
 	}
 	
-	int i = startfrom;
-	int ourpages = i + pgcount;
-	
-	while (i < ourpages) {
-		string comd(pdfsource);
-		comd = comd + "[" + to_string(i) + "]";
+	for (int i=startfrom;i<ourpages;i++) {
+		poppler::page_renderer imagizer;
+		imagizer.set_image_format(poppler::image::format_argb32); // Format set to ARGB32 so that the render can be transferred to the Magick++ Image class
 		
-		page.read(comd);
+		poppler::image loadedpage = imagizer.render_page(document->create_page(i), quality, quality); // Render page as image
+		
+		Image page(loadedpage.width(), loadedpage.height(), "BGRA", StorageType::CharPixel, loadedpage.data()); // Copy raw pixel data to Magick++ Image class for further processing
+		
+		// Magick++'s "load" function is SLOW. Replacing it with Poppler's, and copying the raw data over, speeds up full-program execution by an average of 408%
+		// In testing, I've even had one or two extreme cases which took 15 minutes using the old method, and now only take about a minute
+		
+		page.quality(quality);
+		page.resolutionUnits(PixelsPerInchResolution);
+		page.density(Geometry(quality,quality));
+		page.matte(false);
+		
+		if (grayscale == true) {
+				page.type(GrayscaleType);
+		}
 		
 		tocombine.push_back(page);
 		
@@ -57,12 +94,10 @@ vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool graysc
 		}
 		
 		if (bookthief == true) {
-			double dprog = (double)(i + 1)/(ourpages + 1)*100/segcount*thisseg;
+			double dprog = (double)(i + 1)/(ourpages + 1)*100;
 			int prog = floor(dprog);
-			cout << prog << "%" << endl;
+			progresscounter(prog, 1, numstages, segcount, thisseg);
 		}
-		
-		i = i + 1;
 	}
 	
 	if (finalpageblank == true) {
@@ -101,9 +136,12 @@ vector<Image> loadpages(int pgcount, char* pdfsource, int startfrom, bool graysc
 	}
 	
 	return tocombine;
+
 }
 
-vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose) {
+vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthief, int segcount, int thisseg, int numstages) {
+
+	// We pass &imagelist as a reference so that we can clear its memory progressively as we finish with it, saving on resource usage
 
 	int pgcount = imagelist.size();
 	
@@ -141,10 +179,16 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose) {
 			cout << "Combined pages " << second+1 << " and " << first+1 << "... " << flush;
 		}
 		
+		if (bookthief == true) {
+			double dprog = (double)(first + 1)/((pgcountfromzero / 2) + 1)*100;
+			int prog = floor(dprog);
+			progresscounter(prog, 2, numstages, segcount, thisseg);
+		}
+		
 		newimg.rotate(-90);
 		
 		imagelist.pop_back();
-		imagelist.erase(imagelist.begin());
+		imagelist.erase(imagelist.begin()); // Here we clear the unneeded memory (last and first in the array), and carry on
 		
 		first = first + 1;
 		second = second - 1;
@@ -159,6 +203,12 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose) {
 			
 			if (verbose == true) {
 				cout << "Combined pages " << first+1 << " and " << second+1 << "... " << flush;
+			}
+			
+			if (bookthief == true) {
+				double dprog = (double)(first + 1)/((pgcountfromzero / 2) + 1)*100;
+				int prog = floor(dprog);
+				progresscounter(prog, 2, numstages, segcount, thisseg);
 			}
 		
 			newimg.rotate(-90);
@@ -179,7 +229,7 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose) {
 	
 }
 
-vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwidth, double outheight, int quality, bool verbose) {
+vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwidth, double outheight, int quality, bool verbose, bool bookthief, int segcount, int thisseg, int numstages) {
 
 	int pagecount = pamphlet.size();
 	
@@ -199,9 +249,8 @@ vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwid
 			heightmults[x] = (x+1)*(quality*outheight);
 		}
 
-		
 		int i = 0;
-		while (i < (sizeof(widthmults)/sizeof(*widthmults))) {
+		while (i < 10) {
 			if ((width <= widthmults[i]) || (height <= heightmults[i])) {
 				newwidth = widthmults[i];
 				newheight = heightmults[i];
@@ -229,6 +278,13 @@ vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwid
 			if (verbose == true) {
 				cout << "Rescaling page " << y+1 << "... " << flush;
 			}
+			
+			if (bookthief == true) {
+				double dprog = (double)(y + 1)/(pagecount + 1)*100;
+				int prog = floor(dprog);
+				progresscounter(prog, 3, numstages, segcount, thisseg);
+			}
+			
 			pamphlet[y].resize(newsize);
 		}
 		

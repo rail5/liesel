@@ -1,8 +1,5 @@
 all:
-	g++ `Magick++-config --cxxflags --cppflags` -O2 -s -Wall -o liesel liesel.cpp -lpodofo -lfreetype -lfontconfig -ljpeg -lz `Magick++-config --ldflags --libs`
-	
-static:
-	g++ `Magick++-config --cxxflags --cppflags` -O2 -s -Wall -o liesel liesel.cpp /usr/lib/libGraphicsMagick++.a /usr/lib/libGraphicsMagick.a ./libpodofo.a -lssl -lcrypto -lfreetype -lfontconfig -ljpeg -lz `Magick++-config --ldflags --libs`
+	g++ `Magick++-config --cxxflags --cppflags` `pkg-config --cflags poppler` -O2 -s -Wall -o liesel liesel.cpp -lfreetype -lfontconfig -ljpeg -lz `Magick++-config --ldflags --libs` -lpoppler-cpp
 	
 install:
 	install -m 0755 liesel /usr/bin

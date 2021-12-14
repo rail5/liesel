@@ -1,3 +1,19 @@
+liesel (6.0) focal; urgency=low
+
+  * v6.0 Release
+  Liesel is lightning-fast now
+  Replaced PoDoFo with Poppler
+  Replaced Magick++ load function with Poppler's,
+  which then passes raw pixel data to Magick++ Image class
+  for further processing.
+  in doing so, average full-program execution has been
+  sped up by an average of 408%
+  and no, that's not an exaggeration
+  Improvements made to the progress counter
+  A few explanatory comments added throughout the code
+
+ -- rail5 <andrew@rail5.org>  Tue, 14 Dec 2021 00:32:22 -0500
+
 liesel (5.2.3) focal; urgency=low
 
   * More improvements in memory management

@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   5.2.2
+ * Version:   6.0
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-12-06
+ * Created:   2021-12-13
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -64,7 +64,7 @@ int main(int argc,char **argv)
 
 	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -m\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Always print percentage done\n      (not only when printing in segments)\n\n  -d\n    Specify pixels-per-inch density/quality\n    e.g: -d 100\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n    e.g: -t us-letter\n    or: -t 8.5x11\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -t a4 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
-	const char* infostring = "BookThief + Liesel Copyright (C) 2021 rail5\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. Liesel assumes that the input PDF has pages which are all the same size, and won't work right if its pages are all different sizes\n2. BookThief is a GUI frontend which merely makes calls to Liesel\n3. The source code for both programs is freely available online\n4. Liesel depends on ImageMagick and PoDoFo, two other free (GPL V3-compatible) programs\n";
+	const char* infostring = "BookThief + Liesel Copyright (C) 2021 rail5\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. Liesel assumes that the input PDF has pages which are all the same size, and won't work right if its pages are all different sizes\n2. BookThief is a GUI frontend which merely makes calls to Liesel\n3. The source code for both programs is freely available online\n4. Liesel depends on ImageMagick and Poppler, two other free (GPL V3-compatible) programs\n";
 
 	bool grayscale = false;
 	bool rangeflag = false;
@@ -85,6 +85,8 @@ int main(int argc,char **argv)
 	int rangestart = 0;
 	int rangeend;
 	int rangelength;
+	
+	int numstages = 2;
 	
 	int quality = 100;
 	
@@ -164,6 +166,14 @@ int main(int argc,char **argv)
 		In the above example, this would be 10
 		Uninitialized unless "rangeflag" is tripped
 		
+	numstages:
+		For the progress counter (-b)
+		Normally, there are 2 'stages' to exection: loading pages, and then combining pages
+		The progress counter then divides the 'amount done' by the number of stages
+			ie, 100% done with page loading, 1st stage out of 2, so we're 50% done
+		If the user specifies a transform with -t, that becomes 3 stages instead of 2
+		See void progresscounter() in functions/btfunctions.h for detail
+		
 	quality:
 		Number inputted via -d option
 		Passed to loadpages() function in functions/btfunctions.h
@@ -236,7 +246,7 @@ int main(int argc,char **argv)
 					cout << "OK";
 					return 0;
 				}
-				cout << countpages(infilestr, false); // -p intentionally does not output a newline to stdout
+				cout << countpages(infilestr, false, false); // -p intentionally does not output a newline to stdout
 				return 0;
 				
 				break;
@@ -306,6 +316,7 @@ int main(int argc,char **argv)
 							cout << " " << iter->first << endl;
 							iter++;
 						}
+						cerr << " or a custom size in inches, e.g: 8.5x11" << endl;
 						return 1;
 					}
 					
@@ -318,6 +329,7 @@ int main(int argc,char **argv)
 					outwidth = widthpresets[optarg];
 					outheight = heightpresets[optarg];
 				}
+				numstages = 3;
 				break;
 			case 'v':
 				verbose = true;
@@ -399,7 +411,7 @@ int main(int argc,char **argv)
 
 	try {
 		string infilestr(infile);
-		int pagecount = countpages(infilestr, verbose);
+		int pagecount = countpages(infilestr, verbose, checkflag);
 		
 		if (rangeflag == true) {
 			if (rangeend > pagecount) {
@@ -465,8 +477,8 @@ int main(int argc,char **argv)
 		}
 		
 		if (segcount > 1) {
-			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);		
-			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
+			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);		
+			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
@@ -489,8 +501,8 @@ int main(int argc,char **argv)
 				
 				string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
 				
-				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality);
-				pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
+				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+				pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
 				if (verbose == true) {
 					cout << endl << "Writing to file..." << endl;
 				}
@@ -511,8 +523,8 @@ int main(int argc,char **argv)
 			
 			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
 
-			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
-			pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
+			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+			pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
@@ -524,12 +536,14 @@ int main(int argc,char **argv)
 			return 0;
 		}
 		
-		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality);
-		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose), rescaling, outwidth, outheight, quality, verbose);
+		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
 		if (verbose == true) {
 			cout << endl << "Writing to file..." << endl;
 		}
 		writeImages(pamphlet.begin(), pamphlet.end(), outstring);
+		
+		cout << "100%" << endl;
 		
 		cout << endl << "Done!" << endl;
 		return 0;
