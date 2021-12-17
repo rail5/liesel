@@ -55,7 +55,7 @@ void progresscounter(int prog, int stage, int numstages, int segcount, int thiss
 	cout << progcounter-subtractor << "%" << endl;
 }
 
-vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, bool grayscale, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality, int numstages) {
+vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, vector<int> selectedpages, bool grayscale, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality, int numstages) {
 
 	vector<Image> tocombine;
 	
@@ -71,7 +71,7 @@ vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, bool grays
 		poppler::page_renderer imagizer;
 		imagizer.set_image_format(poppler::image::format_argb32); // Format set to ARGB32 so that the render can be transferred to the Magick++ Image class
 		
-		poppler::image loadedpage = imagizer.render_page(document->create_page(i), quality, quality); // Render page as image
+		poppler::image loadedpage = imagizer.render_page(document->create_page(selectedpages[i]), quality, quality); // Render page as image
 		
 		Image page(loadedpage.width(), loadedpage.height(), "BGRA", StorageType::CharPixel, loadedpage.data()); // Copy raw pixel data to Magick++ Image class for further processing
 		
@@ -90,7 +90,7 @@ vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, bool grays
 		tocombine.push_back(page);
 		
 		if (verbose == true) {
-			cout << "Page " << i+1 << " loaded... " << flush;
+			cout << "Page " << selectedpages[i]+1 << " loaded... " << flush;
 		}
 		
 		if (bookthief == true) {
@@ -139,7 +139,7 @@ vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, bool grays
 
 }
 
-vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthief, int segcount, int thisseg, int numstages) {
+vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthief, int segcount, int thisseg, int numstages, bool landscapeflip, int quality) {
 
 	// We pass &imagelist as a reference so that we can clear its memory progressively as we finish with it, saving on resource usage
 
@@ -150,26 +150,37 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 	int first = 0;
 	int second = pgcountfromzero;
 	
-	vector<Image> recollater;
+	vector<Image> recollater; // Will be the return vector
 	
-	size_t originalwidth = imagelist[0].columns();
-	size_t height = imagelist[0].rows();
-	size_t width = originalwidth * 2;
-		
-	Geometry newsize = Geometry(width, height);
-	newsize.aspect(true);
-	
-	Image newimg;
-		
-	newimg = imagelist[0];
-		
-	newimg.resize(newsize);
+	Image newimg(Geometry(50,50), Color(MaxRGB, MaxRGB, MaxRGB, 0)); // Creating a base image to composite on top of
+	newimg.resolutionUnits(PixelsPerInchResolution);
+	newimg.density(Geometry(quality,quality));
 	
 	while (first <= (pgcountfromzero / 2)) {
 
+
+		size_t widthone = imagelist[imagelist.size()-1].columns();
+		size_t heightone = imagelist[imagelist.size()-1].rows();
+		size_t widthtwo = imagelist[0].columns();
+		size_t heighttwo = imagelist[0].rows();
+		
+		size_t width = max(widthone,widthtwo) * 2; // pick the wider one, double that space
+		size_t height = max(heightone,heighttwo); // higher of the two heights
+		
+		if (heightone != heighttwo || widthone != widthtwo) {
+			Geometry matchsize = Geometry(width/2, height);
+			matchsize.aspect(true);
+			imagelist[imagelist.size()-1].resize(matchsize);
+			imagelist[0].resize(matchsize);
+		}
+		
+		Geometry newsize = Geometry(width, height);
+		newsize.aspect(true);
+		
+		newimg.resize(newsize);
 		
 		newimg.composite(imagelist[imagelist.size()-1], 0, 0);
-		newimg.composite(imagelist[0], originalwidth, 0);
+		newimg.composite(imagelist[0], width/2, 0);
 
 		newimg.rotate(90);
 
@@ -194,11 +205,40 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 		second = second - 1;
 		
 		if (first <= (pgcountfromzero / 2)) {
-			newimg.composite(imagelist[0], 0, 0);
-			newimg.composite(imagelist[imagelist.size()-1], originalwidth, 0);
+		
+			newimg = Image(Geometry(50,50), Color(MaxRGB, MaxRGB, MaxRGB, 0));
 			
-			newimg.rotate(90);
-
+			newimg.resolutionUnits(PixelsPerInchResolution);
+			newimg.density(Geometry(quality,quality));
+		
+			widthone = imagelist[imagelist.size()-1].columns();
+			heightone = imagelist[imagelist.size()-1].rows();
+			widthtwo = imagelist[0].columns();
+			heighttwo = imagelist[0].rows();
+		
+			width = max(widthone,widthtwo) * 2; // pick the wider one, double that space
+			height = max(heightone,heighttwo); // higher of the two heights
+		
+			if (heightone != heighttwo || widthone != widthtwo) {
+				Geometry matchsize = Geometry(width/2, height);
+				matchsize.aspect(true);
+				imagelist[imagelist.size()-1].resize(matchsize);
+				imagelist[0].resize(matchsize);
+			}
+			
+			newsize = Geometry(width,height);
+			newsize.aspect(true);
+			
+			newimg.resize(newsize);
+		
+			newimg.composite(imagelist[0], 0, 0);
+			newimg.composite(imagelist[imagelist.size()-1], width/2, 0);
+			
+			if (landscapeflip == false) {
+				newimg.rotate(90);
+			} else {
+				newimg.rotate(-90);
+			}
 			recollater.push_back(newimg);
 			
 			if (verbose == true) {

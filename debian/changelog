@@ -1,3 +1,25 @@
+liesel (7.0) focal; urgency=low
+
+  * v7.0 Release
+  Updated -r range function to accept multiple ranges
+  in the format -r 1-4,10-13,20-30
+  Updated -r range function to accept "backwards" descending ranges
+  and single-page "ranges" (ie, -r 10-1 and -r 1,2,3,4,5)
+  PDFs no longer need pages of all the same size, due to
+  improvements in the makepamphlet() function,
+  Liesel can now handle PDFs with pages of varied sizes
+  Added -l landscape flipping option
+  Added -V option which echoes the liesel version number
+  Minsize (-m) can now also be set to values lower than 4
+  Changed behavior of the progress counter
+  which used to output progress percentages whenever printing in segments
+  regardless of whether the user specified the -b option
+  Now, of course, it only outputs progress when -b is specified
+  Found and patched a bug in the maybrescale() function where -d
+  pixels-per-inch value was not previously preserved
+
+ -- rail5 <andrew@rail5.org>  Thu, 16 Dec 2021 21:04:59 -0500
+
 liesel (6.0.1) focal; urgency=low
 
   * Updated runtime dependency list

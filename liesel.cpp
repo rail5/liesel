@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   6.0
+ * Version:   7.0
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-12-13
+ * Created:   2021-12-16
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -62,9 +62,11 @@ bool checksegout(string outstring, int segments, bool force = false) {
 int main(int argc,char **argv)
 {
 
-	const char* helpstring = "Usage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only within specified range\n    e.g: -r 1-12\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs)\n\n  -m\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Always print percentage done\n      (not only when printing in segments)\n\n  -d\n    Specify pixels-per-inch density/quality\n    e.g: -d 100\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n    e.g: -t us-letter\n    or: -t 8.5x11\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300 -s 40 -t a4 -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
+	const string versionstring = "7.0";
+
+	const string helpstring = "Liesel " + versionstring + "\n\nUsage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only specified range of pages (in the order supplied)\n    e.g: -r 1-12\n    e.g: -r 15-20,25-30\n    e.g: -r 10,9,5,2,1\n    e.g: -r 20-10 (prints backwards)\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs of 40 pages each)\n\n  -m\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Show progress (percentage done)\n\n  -d\n    Specify pixels-per-inch density/quality (default is 100)\n    e.g: -d 200\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n      e.g: -t us-letter\n      or: -t 8.5x11\n\n  -l\n    Duplex printer \"landscape\" flipping compatibility\n      (flips every other page)\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\n  -V\n    Print version number\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 1,5,7,3,1,50 -l -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
-	const char* infostring = "BookThief + Liesel Copyright (C) 2021 rail5\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. Liesel assumes that the input PDF has pages which are all the same size, and won't work right if its pages are all different sizes\n2. BookThief is a GUI frontend which merely makes calls to Liesel\n3. The source code for both programs is freely available online\n4. Liesel depends on ImageMagick and Poppler, two other free (GPL V3-compatible) programs\n";
+	const string infostring = "BookThief + Liesel Copyright (C) 2021 rail5\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. BookThief is a GUI front-end which merely makes calls to Liesel\n2. The source code for both programs is freely available online\n3. Liesel depends on ImageMagick and Poppler, two other free (GPL V3-compatible) programs\n";
 
 	bool grayscale = false;
 	bool rangeflag = false;
@@ -76,15 +78,15 @@ int main(int argc,char **argv)
 	bool flastpageblank = false;
 	bool extrablanks = false;
 	bool fextrablanks = false;
+	bool landscapeflip = false;
 	
 	char *infile = NULL;
 	char *outfile = NULL;
 	char *rangevalue = NULL;
 
 	int segsize = 0;
-	int rangestart = 0;
-	int rangeend;
-	int rangelength;
+	
+	vector<int> finalpageselection;
 	
 	int numstages = 2;
 	
@@ -149,22 +151,18 @@ int main(int argc,char **argv)
 	rangevalue:
 		a string like this, for example:
 			52-62
-		If -r is specified, Liesel splits the string into its two numbers (eg, "52" and "62") and only handles that range/subset of pages from the inputted PDF.
-		
-	rangestart:
-		The first number in the "rangevalue" string
-		In the above example "52-62", this would be 52
-		Initialized at 0 for later convenience in main()
-		
-	rangeend:
-		The second number
-		In the above example, this would be 62
-		Uninitialized unless "rangeflag" is tripped
+		If -r is specified, Liesel splits the string first by commas (ie, -r 1-4,9-13,7 becomes "1-4" + "9-13" + "7")
+		then splits each of those into the page numbers alone, and only handles that range/subset of pages from the inputted PDF.
 	
-	rangelength:
-		rangeend - rangestart
-		In the above example, this would be 10
-		Uninitialized unless "rangeflag" is tripped
+	finalpageselection:
+		A vector of all the page numbers, in order, that will be processed
+		ie, if the user types -r 1-10
+		the vector will be populated with: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
+		if the user types -r 1-4,2,7-9,350
+		the vector will be populated with: 0, 1, 2, 3, 2, 6, 7, 8, 349
+		
+		It's worth noting that even though we humans count pages starting from 1, computers count them from 0
+		But if you're reading the comments in this source code I probably don't need to tell you that
 		
 	numstages:
 		For the progress counter (-b)
@@ -219,7 +217,7 @@ int main(int argc,char **argv)
 	
 	opterr = 0;
 	
-	while ((c = getopt(argc, argv, "ci:o:r:s:p:d:t:m:ghqfvb")) != -1)
+	while ((c = getopt(argc, argv, "ci:o:r:s:p:d:t:m:ghqfvblV")) != -1)
 		switch(c) {
 			case 'c':
 				checkflag = true;
@@ -284,11 +282,6 @@ int main(int argc,char **argv)
 				}
 				
 				minsize = stoi(optarg);
-				
-				if (minsize < 4) {
-					cerr << "Error: Minsize cannot be shorter than 4 pages" << endl;
-					return 1;
-				}
 				break;
 			case 'd':
 				if (!is_number(optarg)) {
@@ -337,6 +330,9 @@ int main(int argc,char **argv)
 			case 'b':
 				bookthief = true;
 				break;
+			case 'l':
+				landscapeflip = true;
+				break;
 			case 'h':
 				cout << helpstring;
 				return 0;
@@ -345,8 +341,12 @@ int main(int argc,char **argv)
 				cout << infostring;
 				return 0;
 				break;
+			case 'V':
+				cout << versionstring;
+				return 0;
+				break;
 			case '?':
-				if (optopt == 'i' || optopt == 'o' || optopt == 'r' || optopt == 's' || optopt == 'p') {
+				if (optopt == 'i' || optopt == 'o' || optopt == 'r' || optopt == 's' || optopt == 'p' || optopt == 'd' || optopt == 'm') {
 					fprintf(stderr, "Option -%c requires an argument\n", optopt);
 				} else if (isprint(optopt)) {
 					fprintf(stderr, "Unknown option `-%c'\n", optopt);
@@ -379,47 +379,88 @@ int main(int argc,char **argv)
 		return 1;
 	}
 	
+	string infilestr(infile);
+	int pagecount = countpages(infilestr, verbose, checkflag);
+	
 	if (rangeflag == true) {
-		vector<string> rng = explode(rangevalue, '-');
+	
+		vector<string> multiranges = explode(rangevalue, ','); // Permitting multi-range printing (ie, -r 1-10,30-40,42-46) separated by commas
 		
-		if (rng.size() < 2) {
-			cerr << "Error: Invalid range '" << rangevalue << "'" << endl;
-			return 1;
+		
+		
+		for (int i=0;i<multiranges.size();i++) {
+		
+			vector<string> singlerange = explode(multiranges[i], '-');
+			
+			if (singlerange.size() > 2) {
+				cerr << "Error: Invalid range '" << multiranges[i] << "'" << endl;
+				return 1;
+			}
+			
+			if (singlerange.size() > 1) {
+			
+				if (!is_number(singlerange[0]) || !is_number(singlerange[1])) {
+					cerr << "Error: Invalid (non-numeric) range '" << multiranges[i] << "'" << endl;
+					return 1;
+				}
+			
+				int startpage = stoi(singlerange[0]);
+				int endpage = stoi(singlerange[1]);
+			
+				if (startpage == endpage || startpage == 0) {
+					cerr << "Error: Invalid range '" << multiranges[i] << "'" << endl;
+					return 1;
+				}
+				
+				if (startpage > endpage) {
+					if (startpage > pagecount) {
+						cerr << "Error: Given range value '" << multiranges[i] << "' out of range for supplied PDF" << endl;
+						return 1;
+					}
+					for (int x=startpage-1;x>=endpage-1;x--) {
+						finalpageselection.push_back(x);
+					}
+				}
+			
+				for (int x=startpage-1;x<endpage;x++) {
+					if (x >= pagecount) {
+						cerr << "Error: Given range value '" << multiranges[i] << "' out of range for supplied PDF" << endl;
+						return 1;
+					}
+					finalpageselection.push_back(x);
+				}
+			
+			} else if (singlerange.size() == 1) {
+				if (!is_number(singlerange[0])) {
+					cerr << "Error: Invalid (non-numeric) range '" << multiranges[i] << "'" << endl;
+					return 1;
+				}
+				int singlepagerange = stoi(singlerange[0]);
+				if (singlepagerange > pagecount) {
+					cerr << "Error: Page '" << singlepagerange << "' out of range for supplied PDF" << endl;
+					return 1;
+				}
+				finalpageselection.push_back(singlepagerange-1);
+			} else {
+				continue; // User inputted two commas by mistake (-r 1-20,21-40,,,,,,44-45)
+			}
+		
 		}
-		
-		if (!is_number(rng[0]) || !is_number(rng[1])) {
-			cerr << "Error: Invalid (non-numeric) range '" << rangevalue << "'" << endl;
-			return 1;
+
+	} else {
+		for (int i=0;i<pagecount;i++) {
+			finalpageselection.push_back(i);
 		}
-		
-		rangestart = stoi(rng[0]);
-		rangeend = stoi(rng[1]);
-		rangelength = rangeend - rangestart;
-		
-		if (rangestart >= rangeend || rangestart == 0) {
-			cerr << "Error: Invalid range '" << rangevalue << "'" << endl;
-			return 1;
-		} else if (rangelength < (minsize - 1)) {
-			cerr << "Error: Range cannot be shorter than minimum segment size (" << minsize << " pages)" << endl;
-			return 1;
-		}
-		
-		rangestart = rangestart - 1; // preparing for arrays starting at 0 (page counts start at 1)
 	}
 	
 	InitializeMagick(*argv);
 
 	try {
-		string infilestr(infile);
-		int pagecount = countpages(infilestr, verbose, checkflag);
+		
 		
 		if (rangeflag == true) {
-			if (rangeend > pagecount) {
-				cerr << "Error: Given 'range' value out of range for supplied PDF" << endl;
-				return 1;
-			}
 			
-			pagecount = rangelength + 1;
+			pagecount = finalpageselection.size();
 			
 		}
 		
@@ -442,7 +483,7 @@ int main(int argc,char **argv)
 		
 		int thisseg = 1;
 		
-		int firstpage = rangestart;
+		int firstpage = 0;
 		
 		if (segcount > 1) {
 			if (checksegout(outstring, segcount, overwrite) != true) {
@@ -477,74 +518,81 @@ int main(int argc,char **argv)
 		}
 		
 		if (segcount > 1) {
-			vector<Image> loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);		
-			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
+			vector<Image> loaded = loadpages(segsize, infile, firstpage, finalpageselection, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);		
+			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
+			loaded.clear();
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
 			writeImages(pamphlet.begin(), pamphlet.end(), outstring);
 			
-			loaded.clear();
+			
 			pamphlet.clear(); // clear memory early for the sake of the user's machine
 					// these kinds of operations can very easily take up gigabytes of memory
 					// there's no sense holding on to all that memory until it's replaced, when we can free it up immediately
-			
+
 			double dpercentdone = (double)thisseg/segcount;
 			int percentdone = floor(dpercentdone * 100);
-			
-			cout << percentdone << "%" << endl;
+			if (bookthief == true) {
+				cout << percentdone << "%" << endl;
+			}
 		
 			thisseg = 2;
 			
 			while (thisseg < segcount && thisseg > 1) {
-				firstpage = rangestart + (segsize*(thisseg-1));
+				firstpage = segsize*(thisseg-1);
 				
 				string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
 				
-				loaded = loadpages(segsize, infile, firstpage, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-				pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
+				loaded = loadpages(segsize, infile, firstpage, finalpageselection, grayscale, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+				pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
+				loaded.clear();
 				if (verbose == true) {
 					cout << endl << "Writing to file..." << endl;
 				}
 				writeImages(pamphlet.begin(), pamphlet.end(), newname);
 				
-				loaded.clear();
+				
 				pamphlet.clear(); // clear memory early for the sake of the user's machine, see above
+				
 				
 				dpercentdone = (double)thisseg/segcount;
 				percentdone = floor(dpercentdone * 100);
-
-				cout << percentdone << "%" << endl;
+				if (bookthief == true) {
+					cout << percentdone << "%" << endl;
+				}
 				
 				thisseg = thisseg + 1;
 			}
 			
-			firstpage = rangestart + (segsize*(thisseg-1));
+			firstpage = segsize*(thisseg-1);
 			
 			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
 
-			loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-			pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
+			loaded = loadpages(finalsegsize, infile, firstpage, finalpageselection, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+			pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
 			writeImages(pamphlet.begin(), pamphlet.end(), newname);
 			
-			cout << "100%" << endl;
-			
+			if (bookthief == true) {
+				cout << "100%" << endl;
+			}
 			cout << "Done!" << endl;
 			return 0;
 		}
 		
-		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
+		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, finalpageselection, grayscale, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages);
 		if (verbose == true) {
 			cout << endl << "Writing to file..." << endl;
 		}
 		writeImages(pamphlet.begin(), pamphlet.end(), outstring);
 		
-		cout << "100%" << endl;
-		
+		if (bookthief == true) {
+			cout << "100%" << endl;
+		}
 		cout << endl << "Done!" << endl;
 		return 0;
 		

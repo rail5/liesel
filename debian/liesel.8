@@ -1,6 +1,6 @@
 .\" Manpage for liesel
 .\" Contact andrew@rail5.org to correct errors or typos.
-.TH man 8 "30 September 2021" "5.1" "liesel man page"
+.TH man 8 "16 December 2021" "7.0" "liesel man page"
 .SH NAME
 liesel
 .SH SYNOPSIS
@@ -8,75 +8,99 @@ liesel -i some-book.pdf -o ready-to-print.pdf
 .SH DESCRIPTION
 Liesel prepares an inputted PDF to be DIY printed at home in pamphlet- or booklet-style
 .SH OPTIONS
--i
-  Input PDF
+  -i
+    PDF to convert
 
--o
-  Output PDF
+  -o
+    New file for converted PDF
 
--g
-  Convert to grayscale (save on printing costs)
+  -g
+    Convert PDF to greyscale/black and white
 
--r
-  Print only within specified range
-  e.g: -r 1-12
+  -r
+    Print only specified range of pages (in the order supplied)
+    e.g: -r 1-12
+    e.g: -r 15-20,25-30
+    e.g: -r 10,9,5,2,1
+    e.g: -r 20-10 (prints backwards)
 
--s
-  Print output PDFs in segments of a given size
-  e.g: -s 40
-    (produces multiple PDFs)
+    The -r option will process only the selection you give, and in the order that you give it
+    "-r 1,2,3,4,5" is the same as "-r 1-5"
+    "-r 5-1" will print those pages in descending order
 
--m
-  Specify minimum segment size for output PDFs (default minimum is 4)
-  e.g: -m 8
-    if the final segment is shorter than the specified minimum, those pages get 'tacked on' to the penultimate segment
-    for example:
-      liesel -i somefile.pdf -r 1-47 -s 20 -m 4
-        results in 2 segments of 20 pages, + 1 segment of 7 pages
-      liesel -i somefile.pdf -r 1-47 -s 20 -m 8
-        results in 1 segment of 20 pages, + 1 segment of 27 pages
+    You can also combine ranges using commas:
+    -r 1-5,20-25,7,5-1
+    will print first 1,2,3,4,5
+    then 20,21,22,23,24,25
+    then 7
+    then 5,4,3,2,1
 
--d
-  Specify pixels-per-inch density/quality
-  e.g: -d 100
-    (warning: using extremely high values can crash)
+  -s
+    Print output PDFs in segments of a given size
+    e.g: -s 40
+      (produces multiple PDFs of 40 pages each)
 
--t
-  Transform output PDF to print on a specific size paper
-  Either the "us-letter" or "a4" presets can be specified, or a custom size (in inches)
-  e.g: -t us-letter
-  or: -t 8.5x11
+  -m
+    Specify minimum segment size (default is 4)
+    e.g: -m 8
 
+    The minimum segment size is only used when printing in segments
+    If, for example, you're printing 100 pages with -s 40
+    then 2 segments of 40 + 1 "runoff" segment of 20 will be produced
+    If, instead, you print those 100 pages with -s 40 -m 21
+    then those 20 pages, since they don't meet the minimum segment size,
+    will be tacked on to the previous segment,
+    making 1 segment of 40 pages + 1 segment of 60
 
--f
-  Force overwrites
-    (do not warn about files already existing)
+    If -m is not specified, it defaults to 4 pages
 
--v
-  Verbose mode
+  -f
+    Force overwrites
+      (do not warn about files already existing)
 
--b
-  Always print percentage done
-    (not only when printing in segments)
+  -v
+    Verbose mode
 
--p
-  Count pages of input PDF and exit
+  -b
+    Show progress (percentage done)
 
--c
-  Check validity of command, and do not execute
+  -d
+    Specify pixels-per-inch density/quality (default is 100)
+    e.g: -d 200
+      (warning: using extremely large values can crash)
 
--h
-  Print help message
+  -t
+    Transform output PDF to print on a specific size paper
+      e.g: -t us-letter
+      or: -t 8.5x11
+      or: -t 23x7
+      etc
 
--q
-  Print program info
+  -l
+    Duplex printer "landscape" flipping compatibility
+      (flips every other page)
 
-Examples:
+  -p
+    Count pages of input PDF and exit
 
+  -c
+    Check validity of command, and do not execute
+
+  -h
+    Print this help message
+
+  -q
+    Print program info
+
+  -V
+    Print version number
+
+Example:
   liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf
-  liesel -i some-book.pdf -r 100-300 -s 40 -t a4 -o ready-to-print.pdf
+  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf
+  liesel -i some-book.pdf -r 1,5,7,3,1,50 -l -o ready-to-print.pdf
   liesel -p some-book.pdf
-  liesel -c -i some-book.pdf -vbf -o ready-to-print.pdf
+  liesel -c -i some-book.pdf -o output.pdf
 .SH SEE ALSO
 bookthief
 .SH BUGS
