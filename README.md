@@ -14,15 +14,17 @@ This prints 2 pages per 1 side of a sheet of paper, and therefore 4 pages per sh
 
 All listed features are optional. A simple command like *liesel -i somebook.pdf -o booklet.pdf* will of course work just fine
 
- - Range input (i.e, process only pages ##-## from the input PDF)
+ - Range input (i.e, process only the specified pages) (Example: *-r 1-5,7-10,3,20,100-90*)
 
- - Segmented output (produce multiple PDFs in segments of any given length (e.g, 40 pages per segment), to be more manageable when printed)
+ - Segmented output (produce multiple PDFs in segments of any given length (e.g, 40 pages per segment), to be more manageable when printed) (Example: *-s 40*)
  
- - Color-to-grayscale conversion
+ - Color-to-grayscale conversion (*-g*)
+
+ - Automatic "landscape"/"long-edge" flipping (*-l*)
  
- - Specify arbitrary PPI / quality
+ - Specify arbitrary PPI / quality (Example: *-d 175*)
  
- - Transform/resize output PDF to print on any given paper size (e.g, *-t 8.5x11*)
+ - Transform/resize output PDF to print on any given paper size (Example: *-t 8.5x11*)
 
 The manpage and *liesel -h* will provide a comprehensive list of options and how to use them
 
