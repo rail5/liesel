@@ -1,3 +1,12 @@
+liesel (7.1) focal; urgency=low
+
+  * Liesel now checks that the output path is actually writable
+  before going ahead. I can't believe this hadn't come up already.
+  The part of the code dealing with range-printing was also
+  cleaned up slightly.
+
+ -- rail5 <andrew@rail5.org>  Fri, 17 Dec 2021 22:17:12 -0500
+
 liesel (7.0) focal; urgency=low
 
   * v7.0 Release

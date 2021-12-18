@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   7.0
+ * Version:   7.1
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-12-16
+ * Created:   2021-12-17
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -57,6 +57,10 @@ bool checksegout(string outstring, int segments, bool force = false) {
 	}
 	
 	return true;
+}
+
+bool iswritable(char* path) {
+	return (access(path, W_OK) == 0);
 }
 
 int main(int argc,char **argv)
@@ -257,6 +261,10 @@ int main(int argc,char **argv)
 				break;
 			case 'o':
 				outfile = optarg;
+				if (!iswritable(outfile)) {
+					cerr << "Error: Output path is not writable" << endl;
+					return 1;
+				}
 				break;
 			case 'r':
 				rangeflag = true;
@@ -412,22 +420,19 @@ int main(int argc,char **argv)
 					return 1;
 				}
 				
-				if (startpage > endpage) {
-					if (startpage > pagecount) {
-						cerr << "Error: Given range value '" << multiranges[i] << "' out of range for supplied PDF" << endl;
-						return 1;
-					}
-					for (int x=startpage-1;x>=endpage-1;x--) {
-						finalpageselection.push_back(x);
-					}
+				
+				if (max(startpage,endpage) > pagecount) {
+					cerr << "Error: Given range value '" << multiranges[i] << "' out of range for supplied PDF" << endl;
+					return 1;
 				}
-			
+				
+				
+				for (int x=startpage-1;x>=endpage-1;x--) {
+					finalpageselection.push_back(x); // Descending ranges (ie, -r 10-1)
+				}
+				
 				for (int x=startpage-1;x<endpage;x++) {
-					if (x >= pagecount) {
-						cerr << "Error: Given range value '" << multiranges[i] << "' out of range for supplied PDF" << endl;
-						return 1;
-					}
-					finalpageselection.push_back(x);
+					finalpageselection.push_back(x); // Ascending (normal) ranges (ie, -r 1-10)
 				}
 			
 			} else if (singlerange.size() == 1) {
