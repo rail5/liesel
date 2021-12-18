@@ -1,3 +1,12 @@
+liesel (7.1.1) focal; urgency=low
+
+  * Rolled back the previous update due to
+  unforeseen bugs in the filesystem permissions checking
+  A lot of testing will be done and then a
+  working version will be implemented later
+
+ -- rail5 <andrew@rail5.org>  Fri, 17 Dec 2021 22:49:40 -0500
+
 liesel (7.1) focal; urgency=low
 
   * Liesel now checks that the output path is actually writable
