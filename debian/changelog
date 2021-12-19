@@ -1,3 +1,17 @@
+liesel (7.1.2) focal; urgency=low
+
+  * Patched that bug in the filesystem permissions checking
+  Hadn't realized that the unistd access(path, W_OK) checked
+  not only whether the path was writable (as it seemed to me
+  from the docs) but also returned a failure if the specified
+  file didn't already exist. To my mind those are two distinct
+  checks. In fact, access() has another, completely distinct method,
+  access(path, F_OK) which the docs say is for checking
+  whether the file exists. At any rate, bool iswritable() now
+  isolates the path from the filename to avoid that error.
+
+ -- rail5 <andrew@rail5.org>  Sun, 19 Dec 2021 03:11:08
+
 liesel (7.1.1) focal; urgency=low
 
   * Rolled back the previous update due to

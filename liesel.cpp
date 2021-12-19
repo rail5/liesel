@@ -1,8 +1,8 @@
 /***************************************************************
  * Name:      liesel
- * Version:   7.1.1
+ * Version:   7.1.2
  * Author:    rail5 (andrew@rail5.org)
- * Created:   2021-12-17
+ * Created:   2021-12-19
  * Copyright: rail5 (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -59,10 +59,16 @@ bool checksegout(string outstring, int segments, bool force = false) {
 	return true;
 }
 
+bool iswritable(char* outfile) {
+	string filename(outfile);
+	string path = filename.substr(0, filename.find_last_of("/\\" + 1));
+	return (access(path.c_str(), W_OK) == 0);
+}
+
 int main(int argc,char **argv)
 {
 
-	const string versionstring = "7.1.1";
+	const string versionstring = "7.1.2";
 
 	const string helpstring = "Liesel " + versionstring + "\n\nUsage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only specified range of pages (in the order supplied)\n    e.g: -r 1-12\n    e.g: -r 15-20,25-30\n    e.g: -r 10,9,5,2,1\n    e.g: -r 20-10 (prints backwards)\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs of 40 pages each)\n\n  -m\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Show progress (percentage done)\n\n  -d\n    Specify pixels-per-inch density/quality (default is 100)\n    e.g: -d 200\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n      e.g: -t us-letter\n      or: -t 8.5x11\n\n  -l\n    Duplex printer \"landscape\" flipping compatibility\n      (flips every other page)\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\n  -V\n    Print version number\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 1,5,7,3,1,50 -l -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
@@ -257,6 +263,10 @@ int main(int argc,char **argv)
 				break;
 			case 'o':
 				outfile = optarg;
+				if (!iswritable(outfile)) {
+					cerr << "Error: Output path " << outfile << " is not writable" << endl;
+					return 1;
+				}
 				break;
 			case 'r':
 				rangeflag = true;
