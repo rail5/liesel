@@ -61,7 +61,7 @@ bool checksegout(string outstring, int segments, bool force = false) {
 
 bool iswritable(char* outfile) {
 	string filename(outfile);
-	string path = filename.substr(0, filename.find_last_of("/\\" + 1));
+	string path = filename.substr(0, filename.find_last_of("/\\") + 1);
 	return (access(path.c_str(), W_OK) == 0);
 }
 
