@@ -1,5 +1,8 @@
+CC=$(CROSS)g++
+PKG_CONFIG=$(CROSS)pkg-config
+
 all:
-	g++ `Magick++-config --cxxflags --cppflags` `pkg-config --cflags poppler` -O2 -s -Wall -o liesel liesel.cpp -lfreetype -lfontconfig -ljpeg -lz `Magick++-config --ldflags --libs` -lpoppler-cpp
+	$(CC) -std=c++11 `$(PKG_CONFIG) --cflags GraphicsMagick++ poppler` -O2 -s -Wall -o liesel liesel.cpp -lfreetype -lfontconfig -ljpeg -lz `$(PKG_CONFIG) --libs GraphicsMagick++ poppler-cpp libopenjp2`
 	
 install:
 	install -m 0755 liesel /usr/bin
