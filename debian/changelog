@@ -1,3 +1,15 @@
+liesel (7.2) focal; urgency=low
+
+  * Liesel can now also be cross-compiled
+  to a fully-functioning Windows binary
+  Next step is to modify a thing or two in the BookThief GUI
+  Pascal of course is made for cross-compilation, but the
+  TProc that's supposed to spawn Liesel has given
+  some trouble on Windows, and I don't understand Windows
+  well enough to know why just yet
+
+ -- rail5 <andrew@rail5.org>  Mon, 20 Dec 2021 04:32:17
+
 liesel (7.1.2) focal; urgency=low
 
   * Patched that bug in the filesystem permissions checking
