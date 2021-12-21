@@ -8,7 +8,7 @@ liesel (7.2) focal; urgency=low
   some trouble on Windows, and I don't understand Windows
   well enough to know why just yet
 
- -- rail5 <andrew@rail5.org>  Mon, 20 Dec 2021 04:32:17
+ -- rail5 <andrew@rail5.org>  Mon, 20 Dec 2021 04:32:17 -0500
 
 liesel (7.1.2) focal; urgency=low
 
@@ -22,7 +22,7 @@ liesel (7.1.2) focal; urgency=low
   whether the file exists. At any rate, bool iswritable() now
   isolates the path from the filename to avoid that error.
 
- -- rail5 <andrew@rail5.org>  Sun, 19 Dec 2021 03:11:08
+ -- rail5 <andrew@rail5.org>  Sun, 19 Dec 2021 03:11:08 -0500
 
 liesel (7.1.1) focal; urgency=low
 
