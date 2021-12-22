@@ -1,3 +1,16 @@
+liesel (7.2.1) focal; urgency=low
+
+  * Found and patched two bugs
+  Page '0' was permissible input (-r function) in some cases
+  and would of course crash the program
+  That's now patched
+  iswritable() check failed on NULL paths
+  if, for example, the user is outputting to a file in the
+  current working directory and therefore doesn't specify
+  That's now patched as well
+
+ -- rail5 <andrew@rail5.org>  Wed, 22 Dec 2021 04:53:33 -0500
+
 liesel (7.2) focal; urgency=low
 
   * Liesel can now also be cross-compiled

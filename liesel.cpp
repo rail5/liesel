@@ -68,6 +68,12 @@ bool iswritable(char* outfile) {
 	string filename(outfile);
 	string path = filename.substr(0, filename.find_last_of("/\\") + 1);
 	
+	if (path == "") {
+		char cpath[4097];
+		getcwd(cpath, 4096);
+		path = (string)cpath;
+	}
+	
 	return (access(path.c_str(), W_OK) == 0);
 	#endif
 }
@@ -424,7 +430,7 @@ int main(int argc,char **argv)
 				int startpage = stoi(singlerange[0]);
 				int endpage = stoi(singlerange[1]);
 			
-				if (startpage == endpage || startpage == 0) {
+				if (startpage == endpage || startpage == 0 || endpage == 0) {
 					cerr << "Error: Invalid range '" << multiranges[i] << "'" << endl;
 					return 1;
 				}
@@ -449,11 +455,18 @@ int main(int argc,char **argv)
 					cerr << "Error: Invalid (non-numeric) range '" << multiranges[i] << "'" << endl;
 					return 1;
 				}
+				
 				int singlepagerange = stoi(singlerange[0]);
 				if (singlepagerange > pagecount) {
 					cerr << "Error: Page '" << singlepagerange << "' out of range for supplied PDF" << endl;
 					return 1;
 				}
+				
+				if (singlepagerange == 0) {
+					cerr << "Error: Invalid page '0'" << endl;
+					return 1;
+				}
+				
 				finalpageselection.push_back(singlepagerange-1);
 			} else {
 				continue; // User inputted two commas by mistake (-r 1-20,21-40,,,,,,44-45)
