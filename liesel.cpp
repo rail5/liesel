@@ -69,9 +69,7 @@ bool iswritable(char* outfile) {
 	string path = filename.substr(0, filename.find_last_of("/\\") + 1);
 	
 	if (path == "") {
-		char cpath[4097];
-		getcwd(cpath, 4096);
-		path = (string)cpath;
+		path = filename;
 	}
 	
 	return (access(path.c_str(), W_OK) == 0);
