@@ -26,6 +26,16 @@ All listed features are optional. A simple command like *liesel -i somebook.pdf 
  
  - Transform/resize output PDF to print on any given paper size (Example: *-t 8.5x11*)
 
+ - Export preview before running command (Example: *-e 5,6 -o preview.jpeg*)
+
+ - Crop PDF pages (Example: *-C 10,20,30,40* crops 10% from the left, 20% from the right, 30% from the top, 40% from the bottom)
+
+ - Convert to pure black-and-white (Not grayscale) (Example: *-k 50* changes every pixel under 50% brightness to black, every pixel over 50% to white)
+
+ - Widen center margins (add blank space between left and right-hand sides) (Example: *-w 20*)
+
+ - Divide each page into two pages (for example, if the PDF is a scanned book with left and right-hand pages not separated) (*-D*)
+
 The manpage and *liesel -h* will provide a comprehensive list of options and how to use them
 
 
