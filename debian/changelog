@@ -1,3 +1,32 @@
+liesel (8.0) focal; urgency=low
+
+  * v8.0 release
+  Added -k 'color threshold' feature
+  converts the PDF into pure black-and-white
+  with a given 'threshold' value
+  useful for handling scanned PDFs with yellowed pages
+  Added -w 'widen center margins' feature
+  adds blank space between the left and right-hand pages
+  Added -C 'crop' feature
+  crops input pages according to specified values
+  specified as -C 10,20,30,40
+  in the order left,right,top,bottom
+  Added -D 'divide pages' feature
+  divides each page of the input PDF into two pages
+  useful for handling PDFs of scanned books where they
+  scanned two pages at a time and didn't separate them
+  for you
+  Added -e 'export preview JPEG' function
+  exports a preview of 2 (combined) pages to check before
+  running the full command
+  Used as liesel -i input.pdf -e 5,6 -o output.jpeg
+  Found and patched a bug in the has_ending() function
+  Was previously case-sensitive, and so would reject
+  input files where .pdf was written in alternate cases
+  for example, as .PDF or .Pdf
+
+ -- rail5 <andrew@rail5.org>  Sat, 25 Dec 2021 18:26:08
+
 liesel (7.2.1) focal; urgency=low
 
   * Found and patched two bugs

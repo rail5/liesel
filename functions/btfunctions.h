@@ -55,7 +55,7 @@ void progresscounter(int prog, int stage, int numstages, int segcount, int thiss
 	cout << progcounter-subtractor << "%" << endl;
 }
 
-vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, vector<int> selectedpages, bool grayscale, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality, int numstages) {
+vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, vector<int> selectedpages, bool grayscale, bool alterthreshold, double threshold, bool cropflag, vector<int> &cropvalues, bool dividepages, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality, int numstages) {
 
 	vector<Image> tocombine;
 	
@@ -67,7 +67,11 @@ vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, vector<int
 		cout << "Ready to load PDF pages\n";
 	}
 	
+	int vectorindex = 0;
+	int y = 0;
+	
 	for (int i=startfrom;i<ourpages;i++) {
+	
 		poppler::page_renderer imagizer;
 		imagizer.set_image_format(poppler::image::format_argb32); // Format set to ARGB32 so that the render can be transferred to the Magick++ Image class
 		
@@ -84,10 +88,66 @@ vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, vector<int
 		page.matte(false);
 		
 		if (grayscale == true) {
-				page.type(GrayscaleType);
+			page.type(GrayscaleType);
+		}
+		
+		if (alterthreshold == true) {
+			page.threshold(threshold);
+		}
+		
+		if (dividepages == true) {
+			
+			size_t halfwidth = page.columns() / 2;
+			size_t dividedheight = page.rows();
+			
+			Geometry lefthalf = Geometry(halfwidth, dividedheight, 0, 0);
+			Geometry righthalf = Geometry(halfwidth, dividedheight, halfwidth, 0);
+			
+			Image newpage = page;
+			newpage.crop(lefthalf);
+			page.crop(righthalf);
+			
+			tocombine.push_back(newpage);
 		}
 		
 		tocombine.push_back(page);
+		
+		if (cropflag == true) {
+			for (long unsigned int x=0;x<cropvalues.size();x++) {
+				if (cropvalues[x] > 100) {
+					cropvalues[x] = 100;
+				}
+			}
+			
+			int cropleft = ((tocombine[vectorindex].columns() / 100) * cropvalues[0]) / 2;
+			int cropright = ((tocombine[vectorindex].columns() / 100) * cropvalues[1]) / 2;
+			int croptop = ((tocombine[vectorindex].columns() / 100) * cropvalues[2]) / 2;
+			int cropbottom = ((tocombine[vectorindex].columns() / 100) * cropvalues[3]) / 2;
+			
+			Geometry lefthand(tocombine[vectorindex].columns() - cropleft, tocombine[vectorindex].rows(), cropleft, 0);
+			tocombine[vectorindex].crop(lefthand);
+			Geometry righthand(tocombine[vectorindex].columns() - cropright, tocombine[vectorindex].rows(), 0, 0);
+			tocombine[vectorindex].crop(righthand);
+			Geometry tophand(tocombine[vectorindex].columns(), tocombine[vectorindex].rows() - croptop, 0, croptop);
+			tocombine[vectorindex].crop(tophand);
+			Geometry bottomhand(tocombine[vectorindex].columns(), tocombine[vectorindex].rows() - cropbottom, 0, 0);
+			tocombine[vectorindex].crop(bottomhand);
+
+			if (dividepages == true) {
+				vectorindex = vectorindex + 1;
+				Geometry lefthand(tocombine[vectorindex].columns() - cropleft, tocombine[vectorindex].rows(), cropleft, 0);
+				tocombine[vectorindex].crop(lefthand);
+				Geometry righthand(tocombine[vectorindex].columns() - cropright, tocombine[vectorindex].rows(), 0, 0);
+				tocombine[vectorindex].crop(righthand);
+				Geometry tophand(tocombine[vectorindex].columns(), tocombine[vectorindex].rows() - croptop, 0, croptop);
+				tocombine[vectorindex].crop(tophand);
+				Geometry bottomhand(tocombine[vectorindex].columns(), tocombine[vectorindex].rows() - cropbottom, 0, 0);
+				tocombine[vectorindex].crop(bottomhand);
+			}
+		}
+		
+		vectorindex = vectorindex + 1;
+		y = y + 1;
 		
 		if (verbose == true) {
 			cout << "Page " << selectedpages[i]+1 << " loaded... " << flush;
@@ -139,7 +199,7 @@ vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, vector<int
 
 }
 
-vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthief, int segcount, int thisseg, int numstages, bool landscapeflip, int quality) {
+vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthief, int segcount, int thisseg, int numstages, bool landscapeflip, int quality, bool widenflag, int widenby, bool previewonly, bool dividepages) {
 
 	// We pass &imagelist as a reference so that we can clear its memory progressively as we finish with it, saving on resource usage
 
@@ -152,12 +212,13 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 	
 	vector<Image> recollater; // Will be the return vector
 	
-	Image newimg(Geometry(50,50), Color(MaxRGB, MaxRGB, MaxRGB, 0)); // Creating a base image to composite on top of
-	newimg.resolutionUnits(PixelsPerInchResolution);
-	newimg.density(Geometry(quality,quality));
+	
 	
 	while (first <= (pgcountfromzero / 2)) {
 
+		Image newimg(Geometry(50,50), Color(MaxRGB, MaxRGB, MaxRGB, 0)); // Creating a base image to composite on top of
+		newimg.resolutionUnits(PixelsPerInchResolution);
+		newimg.density(Geometry(quality,quality));
 
 		size_t widthone = imagelist[imagelist.size()-1].columns();
 		size_t heightone = imagelist[imagelist.size()-1].rows();
@@ -174,16 +235,43 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 			imagelist[0].resize(matchsize);
 		}
 		
+		double dwidenby = ((width / 4) / 100) * widenby; // Declare this variable in-scope to be used later
+		
+		if (widenflag == true) {
+			size_t widthwithmargin = (width/2) - dwidenby;
+			Geometry resizedagain = Geometry(widthwithmargin, height);
+			resizedagain.aspect(true);
+			imagelist[imagelist.size()-1].resize(resizedagain);
+			imagelist[0].resize(resizedagain);
+		}
+		
 		Geometry newsize = Geometry(width, height);
 		newsize.aspect(true);
 		
 		newimg.resize(newsize);
 		
-		newimg.composite(imagelist[imagelist.size()-1], 0, 0);
-		newimg.composite(imagelist[0], width/2, 0);
+		if (dividepages && previewonly) {
+			newimg.composite(imagelist[imagelist.size()-1], ((width/2) + (dwidenby*widenflag)), 0); // again, same old trick of using a boolean in math
+														// if we're not widening the center margins at all,
+														// then this places the page on the right hand side
+														// starting position : width / 2
+														// + ((some amount of widening) * (0 or 1 based on whether we're doing that))
+														// if we're widening the center by, say, 20
+														// then:
+														// starting position: width / 2
+														// + the amount we're widening by (because we don't want this page's left-hand border
+														// to be exactly in the center anymore)
+			newimg.composite(imagelist[0], 0, 0);
+		} else {
+			newimg.composite(imagelist[imagelist.size()-1], 0, 0);
+			newimg.composite(imagelist[0], ((width/2) + (dwidenby*widenflag)), 0);
+		}
+		
+		if (previewonly == false || numstages > 2) {
+			newimg.rotate(90);
+		}
 
-		newimg.rotate(90);
-
+			
 		recollater.push_back(newimg);
 		
 		if (verbose == true) {
@@ -197,7 +285,8 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 		}
 		
 		newimg.rotate(-90);
-		
+
+
 		imagelist.pop_back();
 		imagelist.erase(imagelist.begin()); // Here we clear the unneeded memory (last and first in the array), and carry on
 		
@@ -226,13 +315,23 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 				imagelist[0].resize(matchsize);
 			}
 			
+			
+			dwidenby = ((width / 4) / 100) * widenby;
+			if (widenflag == true) {
+				size_t widthwithmargin = (width/2) - dwidenby;
+				Geometry resizedagain = Geometry(widthwithmargin, height);
+				resizedagain.aspect(true);
+				imagelist[imagelist.size()-1].resize(resizedagain);
+				imagelist[0].resize(resizedagain);
+			}
+			
 			newsize = Geometry(width,height);
 			newsize.aspect(true);
 			
 			newimg.resize(newsize);
 		
 			newimg.composite(imagelist[0], 0, 0);
-			newimg.composite(imagelist[imagelist.size()-1], width/2, 0);
+			newimg.composite(imagelist[imagelist.size()-1], ((width/2) + (dwidenby*widenflag)), 0);
 			
 			if (landscapeflip == false) {
 				newimg.rotate(90);
@@ -269,7 +368,7 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 	
 }
 
-vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwidth, double outheight, int quality, bool verbose, bool bookthief, int segcount, int thisseg, int numstages) {
+vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwidth, double outheight, int quality, bool verbose, bool bookthief, int segcount, int thisseg, int numstages, bool previewonly) {
 
 	int pagecount = pamphlet.size();
 	
@@ -326,6 +425,7 @@ vector<Image> mayberescale(vector<Image> pamphlet, bool rescaling, double outwid
 			}
 			
 			pamphlet[y].resize(newsize);
+			pamphlet[y].rotate(-90*previewonly); // Rotate -90*0 = 0 if not preview, -90*1 = -90 if preview
 		}
 		
 	}

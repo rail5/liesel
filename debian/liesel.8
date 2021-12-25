@@ -1,6 +1,6 @@
 .\" Manpage for liesel
 .\" Contact andrew@rail5.org to correct errors or typos.
-.TH man 8 "16 December 2021" "7.0" "liesel man page"
+.TH man 8 "25 December 2021" "8.0" "liesel man page"
 .SH NAME
 liesel
 .SH SYNOPSIS
@@ -13,6 +13,10 @@ Liesel prepares an inputted PDF to be DIY printed at home in pamphlet- or bookle
 
   -o
     New file for converted PDF
+  
+  -e
+    Export example/preview JPEG image of selected pages
+    e.g: -i infile.pdf -e 5,6 -o preview.jpeg
 
   -g
     Convert PDF to greyscale/black and white
@@ -79,6 +83,29 @@ Liesel prepares an inputted PDF to be DIY printed at home in pamphlet- or bookle
   -l
     Duplex printer "landscape" flipping compatibility
       (flips every other page)
+  
+  -k
+    Convert to pure black-and-white (not grayscale) with given threshold value between 0-100
+    e.g: -k 70
+      will convert any color with brightness under 70% to pure black, and any brighter color to pure white
+      this option is particularly useful in printing PDFs of scanned books with yellowed pages etc
+  
+  -C
+    Crop pages according to specified values
+    e.g: -C 10,20,30,40
+      order: left,right,top,bottom
+      cuts 10 from the left side, 20 from the right side, etc
+      numbers are treated as percentages (10% of the left side, etc)
+  
+  -w
+    Widen center margins according to specified value
+    e.g: -w 30
+      (adds blank space between left and right-hand pages)
+  
+  -D
+    Divide each page into two
+      divides the left half and the right half of each page in the input PDF into two separate pages
+      this option can be useful in printing PDFs of scanned books which haven't already separated their pages
 
   -p
     Count pages of input PDF and exit
