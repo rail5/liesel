@@ -1,18 +1,3 @@
-#ifndef ALGORITHM
-#define ALGORITHM
-#include <algorithm>
-#endif
-
-#ifndef CCTYPE
-#define CCTYPE
-#include <cctype>
-#endif
-
-#ifndef STRING
-#define STRING
-#include <string>
-#endif
-
 std::string lowerthecase(std::string input) {
 	std::transform(input.begin(), input.end(), input.begin(), ::tolower);
 	return input;

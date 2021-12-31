@@ -1,3 +1,13 @@
+liesel (8.1) focal; urgency=low
+
+  * Cleaned up the code a bit
+  Organized includes/functions
+  Attempted to make the code easier to navigate
+  Slightly re-structured main() function to remove
+  unnecessary conditionals
+
+ -- rail5 <andrew@rail5.org>  Fri, 31 Dec 2021 01:19:42 -0500
+
 liesel (8.0) focal; urgency=low
 
   * v8.0 release

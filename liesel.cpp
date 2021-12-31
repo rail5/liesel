@@ -7,80 +7,14 @@
  * License:   GNU GPL V3
  **************************************************************/
 
-#include <iostream>
-#include <cstring>
-#include <unistd.h>
-#include <math.h>
-#include <sstream>
-#include <filesystem>
-
-#include "functions/itoa.h"
-#include "functions/explode.h"
-#include "functions/has_ending.h"
-#include "functions/is_number.h"
-#include "functions/file_exists.h"
-#include "functions/btfunctions.h"
-#include "functions/is_decimal.h"
+#include "includes.h"
 
 using namespace std;
-
-bool checkin(char* infile) {
-	// Infile sanity checks written as an isolated function to be used in both -i and -p cases
-	if (!file_exists(infile)) {
-		cout << "Error: File '" << infile << "' not found" << endl;
-		return false;
-	}
-	
-	if (!has_ending((string)infile, ".pdf")) {
-		cout << "Error: At this stage, Liesel only supports PDFs\nPlease look for a future version to support other formats" << endl;
-		return false;
-	}
-	
-	return true;
-}
-
-bool checksegout(string outstring, int segments, bool force = false) {
-
-	if (force == true) {
-		return true;
-	}
-
-	// If we're printing in segments, this checks that output-part2.pdf, output-part3.pdf etc don't already exist, so we don't overwrite them
-	int i = 2;
-	while (i <= segments) {
-		string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(i) + ".pdf";
-		
-		if (file_exists(newname)) {
-			cout << "Error: File '" << newname << "' already exists!" << endl;
-			return false;
-		}
-		i = i + 1;
-	}
-	
-	return true;
-}
-
-bool iswritable(char* outfile) {
-
-	#ifdef _WIN32
-	return true; // all directories in Windows have write access
-	#else
-
-	string filename(outfile);
-	string path = filename.substr(0, filename.find_last_of("/\\") + 1);
-	
-	if (path == "") {
-		path = filesystem::current_path();
-	}
-	
-	return (access(path.c_str(), W_OK) == 0);
-	#endif
-}
 
 int main(int argc,char **argv)
 {
 
-	const string versionstring = "8.0";
+	const string versionstring = "8.1";
 
 	const string helpstring = "Liesel " + versionstring + "\n\nUsage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n    PDF to convert\n\n  -o\n    New file for converted PDF\n\n  -e\n    Export example/preview JPEG image of selected pages\n    e.g: -i infile.pdf -e 5,6 -o preview.jpeg\n\n  -g\n    Convert PDF to greyscale/black and white\n\n  -r\n    Print only specified range of pages (in the order supplied)\n    e.g: -r 1-12\n    e.g: -r 15-20,25-30\n    e.g: -r 10,9,5,2,1\n    e.g: -r 20-10 (prints backwards)\n\n  -s\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs of 40 pages each)\n\n  -m\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n    Verbose mode\n\n  -b\n    Show progress (percentage done)\n\n  -d\n    Specify pixels-per-inch density/quality (default is 100)\n    e.g: -d 200\n      (warning: using extremely large values can crash)\n\n  -t\n    Transform output PDF to print on a specific size paper\n      e.g: -t us-letter\n      or: -t 8.5x11\n\n  -l\n    Duplex printer \"landscape\" flipping compatibility\n      (flips every other page)\n\n  -k\n    Convert to pure black-and-white (not grayscale) with given threshold value between 0-100\n    e.g: -k 70\n      will convert any color with brightness under 70% to pure black, and any brighter color to pure white\n      this option is particularly useful in printing PDFs of scanned books with yellowed pages etc\n\n  -C\n    Crop pages according to specified values\n    e.g: -C 10,20,30,40\n      order: left,right,top,bottom\n      cuts 10 from the left side, 20 from the right side, etc\n      numbers are treated as percentages (10% of the left side, etc)\n\n  -w\n    Widen center margins according to specified value\n    e.g: -w 30\n      (adds blank space between pages)\n\n  -D\n    Divide each page into two\n      divides the left half and the right half into separate pages\n      this option is particularly useful in printing PDFs of scanned books which haven't already separated the pages\n\n  -p\n    Count pages of input PDF and exit\n\n  -c\n    Check validity of command, and do not execute\n\n  -h\n    Print this help message\n\n  -q\n    Print program info\n\n  -V\n    Print version number\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 1,5,7,3,1,50 -l -o ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
@@ -597,8 +531,6 @@ int main(int argc,char **argv)
 	InitializeMagick(*argv);
 
 	try {
-		
-		
 		if (rangeflag == true || exportflag == true) {
 			pagecount = finalpageselection.size();
 		}
@@ -657,84 +589,62 @@ int main(int argc,char **argv)
 		}
 
 		
-		if (segcount > 1) {
-			vector<Image> loaded = loadpages(segsize, infile, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);		
+		
+		
+		while (thisseg < segcount) {
+			
+			firstpage = segsize*(thisseg-1);
+				
+			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
+				
+			vector<Image> loaded = loadpages(segsize, infile, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
 			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
 			loaded.clear();
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
-			writeImages(pamphlet.begin(), pamphlet.end(), outstring);
-			
-			
-			pamphlet.clear(); // clear memory early for the sake of the user's machine
-					// these kinds of operations can very easily take up gigabytes of memory
-					// there's no sense holding on to all that memory until it's replaced, when we can free it up immediately
-
+			writeImages(pamphlet.begin(), pamphlet.end(), newname);
+				
+				
+			pamphlet.clear(); // clear memory early for the sake of the user's machine, see above
+				
+				
 			double dpercentdone = (double)thisseg/segcount;
 			int percentdone = floor(dpercentdone * 100);
 			if (bookthief == true) {
 				cout << percentdone << "%" << endl;
 			}
+				
+			thisseg = thisseg + 1;
+		}
+			
+		firstpage = segsize*(thisseg-1);
 		
-			thisseg = 2;
-			
-			while (thisseg < segcount && thisseg > 1) {
-			
-				firstpage = segsize*(thisseg-1);
-				
-				string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
-				
-				loaded = loadpages(segsize, infile, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-				pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
-				loaded.clear();
-				if (verbose == true) {
-					cout << endl << "Writing to file..." << endl;
-				}
-				writeImages(pamphlet.begin(), pamphlet.end(), newname);
-				
-				
-				pamphlet.clear(); // clear memory early for the sake of the user's machine, see above
-				
-				
-				dpercentdone = (double)thisseg/segcount;
-				percentdone = floor(dpercentdone * 100);
-				if (bookthief == true) {
-					cout << percentdone << "%" << endl;
-				}
-				
-				thisseg = thisseg + 1;
-			}
-			
-			firstpage = segsize*(thisseg-1);
-			
-			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
-
-			loaded = loadpages(finalsegsize, infile, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-			pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
-			if (verbose == true) {
-				cout << endl << "Writing to file..." << endl;
-			}
-			writeImages(pamphlet.begin(), pamphlet.end(), newname);
-			
-			if (bookthief == true) {
-				cout << "100%" << endl;
-			}
-			cout << "Done!" << endl;
-			return 0;
+		string appendtofname = ".pdf";
+		
+		if (segcount > 1) {
+			appendtofname = "-part" + to_string(thisseg) + ".pdf";
 		}
 		
+		string newname = outstring;
+
+		if (!exportflag) {
+			newname = outstring.substr(0, outstring.size()-4) + appendtofname;
+		}
+
 		vector<Image> loaded = loadpages(finalsegsize, infile, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
 		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
+		
 		if (verbose == true) {
 			cout << endl << "Writing to file..." << endl;
 		}
-		writeImages(pamphlet.begin(), pamphlet.end(), outstring);
 		
+		writeImages(pamphlet.begin(), pamphlet.end(), newname);
+			
 		if (bookthief == true) {
 			cout << "100%" << endl;
 		}
-		cout << endl << "Done!" << endl;
+		cout << "Done!" << endl;
 		return 0;
 		
 	}

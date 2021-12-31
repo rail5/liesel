@@ -1,9 +1,3 @@
-#ifndef STAT
-#define STAT
-#include <sys/stat.h>
-#endif
-
-
 #ifdef _WIN32
 inline bool file_exists(const char *name) {
 	return (_access(name, 0) != -1);

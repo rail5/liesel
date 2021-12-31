@@ -1,14 +1,3 @@
-#ifndef ALGORITHM
-#define ALGORITHM
-#include <algorithm>
-#endif
-
-#include "starts_with.h"
-
-//has_ending() is included by liesel.cpp
-//need to work out a cleaner way to handle these includes
-
-
 inline bool is_decimal(const std::string& s)
 {
 	size_t n = std::count(s.begin(), s.end(), '.');
