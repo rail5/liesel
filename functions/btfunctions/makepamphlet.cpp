@@ -1,7 +1,7 @@
 using namespace std;
 using namespace Magick;
 
-vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthief, int segcount, int thisseg, int numstages, bool landscapeflip, int quality, bool widenflag, int widenby, bool previewonly, bool dividepages) {
+vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthief, int segcount, int thisseg, int numstages, bool landscapeflip, int quality, bool widenflag, int widenby, bool previewonly, bool dividepages, bool automargin, int maxmargin) {
 
 	// We pass &imagelist as a reference so that we can clear its memory progressively as we finish with it, saving on resource usage
 
@@ -12,9 +12,9 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 	int first = 0;
 	int second = pgcountfromzero;
 	
+	int minmargin = widenby;
+	
 	vector<Image> recollater; // Will be the return vector
-	
-	
 	
 	while (first <= (pgcountfromzero / 2)) {
 
@@ -35,6 +35,20 @@ vector<Image> makepamphlet(vector<Image> &imagelist, bool verbose, bool bookthie
 			matchsize.aspect(true);
 			imagelist[imagelist.size()-1].resize(matchsize);
 			imagelist[0].resize(matchsize);
+		}
+		
+		if (automargin == true) {
+			widenflag = true;
+			if (maxmargin != 0) {
+				double widenconst = (double)maxmargin / (double)(pgcountfromzero / 2);
+				widenby = first * widenconst;
+			} else {
+				widenby = first * 0.35;
+			}
+			
+			if (widenby < minmargin) {
+				widenby = minmargin;
+			}
 		}
 		
 		double dwidenby = ((width / 4) / 100) * widenby; // Declare this variable in-scope to be used later

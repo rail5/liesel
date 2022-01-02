@@ -34,6 +34,8 @@ All listed features are optional. A simple command like *liesel -i somebook.pdf 
 
  - Widen center margins (add blank space between left and right-hand sides) (Example: *-w 20*)
 
+ - Auto-widen center margins (*progressively* add blank space between left and right-hand sides, wider toward the middle of the booklet) (Example: *-a* or *-a 50*)
+
  - Divide each page into two pages (for example, if the PDF is a scanned book with left and right-hand pages not separated) (*-D*)
 
 The manpage and *liesel -h* will provide a comprehensive list of options and how to use them

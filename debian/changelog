@@ -1,3 +1,21 @@
+liesel (9.0) focal; urgency=low
+
+  * v9.0 release
+  Added -a 'auto margin' feature
+  progressively widens center-margins
+  (the space between the left and right-hand pages)
+  towards the middle of the booklet,
+  so that those margins are wider in the middle,
+  and narrower at the ends
+  primarily for use in printing very large booklets
+  Added undocumented -B 'bookthief extra' option
+  outputs a newline-delimited list of user-provided options
+  used for BookThief's new 'import command' feature
+  Separated native-nix compilation and windows cross-compilation
+  in the makefile
+
+ -- rail5 <andrew@rail5.org>  Sat, 1 Jan 2022 22:01:17 -0500
+
 liesel (8.1) focal; urgency=low
 
   * Cleaned up the code a bit

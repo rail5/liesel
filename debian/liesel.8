@@ -1,6 +1,6 @@
 .\" Manpage for liesel
 .\" Contact andrew@rail5.org to correct errors or typos.
-.TH man 8 "25 December 2021" "8.0" "liesel man page"
+.TH man 8 "01 January 2022" "9.0" "liesel man page"
 .SH NAME
 liesel
 .SH SYNOPSIS
@@ -101,6 +101,13 @@ Liesel prepares an inputted PDF to be DIY printed at home in pamphlet- or bookle
     Widen center margins according to specified value
     e.g: -w 30
       (adds blank space between left and right-hand pages)
+  
+  -a
+    Auto-widen center margins
+    e.g: -a (completely automatic)
+    e.g: -a 30 (auto, with a maximum of 30)
+      (progressively widens center margins towards the middle of the booklet)
+      (if -w is also specified, -w acts as the minimum margin)
   
   -D
     Divide each page into two
