@@ -1,11 +1,16 @@
 using namespace std;
 using namespace Magick;
 
-vector<Image> loadpages(int pgcount, string pdfsource, int startfrom, vector<int> selectedpages, bool grayscale, bool alterthreshold, double threshold, bool cropflag, vector<int> &cropvalues, bool dividepages, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality, int numstages) {
+vector<Image> loadpages(int pgcount, string pdfsource, bool pdfstdin, int startfrom, vector<int> selectedpages, bool grayscale, bool alterthreshold, double threshold, bool cropflag, vector<int> &cropvalues, bool dividepages, bool finalpageblank, bool extrablanks, bool verbose, bool bookthief, int segcount, int thisseg, int quality, int numstages) {
 
 	vector<Image> tocombine;
 	
-	poppler::document* document = poppler::document::load_from_file(pdfsource.c_str());
+	poppler::document* document;
+	if (!pdfstdin) {
+		document = poppler::document::load_from_file(pdfsource.c_str());
+	} else {
+		document = poppler::document::load_from_raw_data(pdfsource.c_str(), pdfsource.size());
+	}
 	
 	int ourpages = startfrom + pgcount;
 	
