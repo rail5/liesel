@@ -5,6 +5,8 @@ liesel (10.0) focal; urgency=low
   Added option to receive PDF from STDIN (-I / --stdin)
   And option to output PDF to STDOUT (-O / --stdout)
 
+ -- rail5 <andrew@rail5.org>  Sun, 23 Jan 2022 23:39:12 -0500
+
 liesel (9.0) focal; urgency=low
 
   * v9.0 release
