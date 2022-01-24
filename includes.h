@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstring>
 #include <unistd.h>
+#include <getopt.h>
 #include <math.h>
 #include <sstream>
 #include <filesystem>

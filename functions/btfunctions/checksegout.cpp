@@ -1,8 +1,8 @@
 using namespace std;
 
-bool checksegout(string outstring, int segments, bool force = false) {
+bool checksegout(string outstring, int segments, bool force = false, bool pdfstdout = false) {
 
-	if (force == true) {
+	if (force == true || pdfstdout == true) {
 		return true;
 	}
 

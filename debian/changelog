@@ -1,3 +1,10 @@
+liesel (10.0) focal; urgency=low
+
+  * v10.0 release
+  Added longopts support for easier use
+  Added option to receive PDF from STDIN (-I / --stdin)
+  And option to output PDF to STDOUT (-O / --stdout)
+
 liesel (9.0) focal; urgency=low
 
   * v9.0 release
