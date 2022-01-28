@@ -848,10 +848,10 @@ int main(int argc,char **argv)
 			
 				writeImages(pamphlet.begin(), pamphlet.end(), &inmemory, true); // Write to Blob
 			
-				unsigned char* outputpdfyo = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
+				unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
 		
 				for (long unsigned int i=0;i<inmemory.length();i++) {
-					printf("%c", outputpdfyo[i]);
+					printf("%c", rawpdfbytes[i]);
 				}
 		
 			}
@@ -901,10 +901,10 @@ int main(int argc,char **argv)
 			
 			writeImages(pamphlet.begin(), pamphlet.end(), &inmemory, true); // Write to Blob
 			
-			unsigned char* outputpdfyo = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
+			unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
 		
 			for (long unsigned int i=0;i<inmemory.length();i++) {
-				printf("%c", outputpdfyo[i]);
+				printf("%c", rawpdfbytes[i]);
 			}
 		
 		}
