@@ -1,3 +1,11 @@
+liesel (10.1~alpha1) focal; urgency=low
+
+  * Added --output-settings longopt for -B
+  Added -B entry to help menu
+  -B now outputs an XML table
+
+ -- rail5 <andrew@rail5.org>  Thu, 27 Jan 2022 22:06:48 -0500
+
 liesel (10.0) focal; urgency=low
 
   * v10.0 release
