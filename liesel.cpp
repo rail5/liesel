@@ -54,10 +54,10 @@ int main(int argc,char **argv)
 	bool pdfstdout = false;
 	string binaryinput = "";
 	
-	char *infile = NULL;
-	char *outfile = NULL;
-	char *rangevalue = NULL;
-	char *exportvalue = NULL;
+	string infile = "";
+	string outfile = "";
+	string rangevalue = "";
+	string exportvalue = "";
 	
 	string kparam = "";
 	
@@ -493,7 +493,7 @@ int main(int argc,char **argv)
 		}
 	}
 			
-	if (infile == NULL && pdfstdin == false) {
+	if (infile == "" && pdfstdin == false) {
 		if (!optout) {
 			cerr << helpstring;
 			return 1;
@@ -501,12 +501,12 @@ int main(int argc,char **argv)
 		noinfile = true; // Only set if -B was specified, ie infile not needed
 	}
 	
-	if (infile != NULL && pdfstdin == true) {
+	if (infile != "" && pdfstdin == true) {
 		// Read from provided file by preference rather than STDIN if both -i and -I are supplied
 		pdfstdin = false;
 	}
 	
-	if (outfile == NULL && pdfstdout == false) {
+	if (outfile == "" && pdfstdout == false) {
 		if (!optout) {
 			cerr << helpstring;
 			return 1;
@@ -514,12 +514,11 @@ int main(int argc,char **argv)
 		nooutfile = true;
 	}
 	
-	if (outfile != NULL && pdfstdout == true) {
+	if (outfile != "" && pdfstdout == true) {
 		pdfstdout = false;
 	}
 	
 	if (pdfstdout) {
-		outfile = (char*)"0"; // needs to be initialized
 		
 		verbose = false;
 		bookthief = false;
@@ -530,10 +529,7 @@ int main(int argc,char **argv)
 		
 	}
 	
-	if (pdfstdin) {
-		infile = (char*)"0"; // also needs to be initialized
-	}
-	
+
 	string outstring;
 	
 	if (!optout) {
@@ -648,6 +644,24 @@ int main(int argc,char **argv)
 	} else {
 		infilestr = binaryinput;
 	}
+	
+	///// TESTING
+	/*
+	cout << "running some tests\n\n\n";
+	
+	Liesel::Book ourbook = Liesel::load_book(infilestr, pdfstdin);
+	ourbook.count_pages(verbose);
+	cout << "pagecount: " << ourbook.pagecount << endl;
+	
+	if (!ourbook.set_pages(rangeflag, rangevalue)) {
+		cerr << "error setting pages" << endl;
+		return 1;
+	}
+	
+	cout << "done\n\n";
+	return 0; */
+	/// END TESTING
+	
 	int pagecount = countpages(infilestr, verbose, checkflag, pdfstdin);
 	
 	if (rangeflag == true) {
@@ -723,7 +737,9 @@ int main(int argc,char **argv)
 		for (int i=0;i<pagecount;i++) {
 			finalpageselection.push_back(i);
 		}
+		rangevalue = (char*)"0"; // needs to be initialized
 	}
+	
 	
 	if (exportflag == true) {
 		vector<string> toexport = explode(exportvalue, ',');
@@ -823,7 +839,25 @@ int main(int argc,char **argv)
 		}
 
 		
+		Liesel::Book ourbook = Liesel::load_book(infilestr, pdfstdin, true);
+		if (!ourbook.loaded) {
+			cerr << "Not loaded" << endl;
+			return 1;
+		}
+		ourbook.count_pages(verbose);
+		if (!ourbook.set_pages(rangeflag, rangevalue)) {
+			cerr << "Error setting pages" << endl;
+			return 1;
+		}
+		ourbook.properties.grayscale = grayscale;
+		ourbook.properties.alterthreshold = alterthreshold;
+		ourbook.properties.cropflag = cropflag;
+		ourbook.properties.dividepages = dividepages;
+		ourbook.properties.quality = quality;
+		ourbook.properties.threshold = threshold;
+		ourbook.properties.cropvalues = cropvalues;
 		
+		ourbook.printjob.numstages = numstages;
 		
 		while (thisseg < segcount) {
 			
@@ -831,9 +865,20 @@ int main(int argc,char **argv)
 				
 			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
 				
-			vector<Image> loaded = loadpages(segsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
-			loaded.clear();
+			//vector<Image> loaded = loadpages(segsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+			
+			ourbook.printjob.finalpageblank = lastpageblank;
+			ourbook.printjob.extrablanks = extrablanks;
+			ourbook.printjob.segcount = segcount;
+			ourbook.printjob.thisseg = thisseg;
+			ourbook.printjob.startfrom = firstpage;
+			
+			ourbook.printjob.endat = firstpage + segsize;
+
+			ourbook.load_pages(verbose, bookthief);
+			
+			vector<Image> pamphlet = mayberescale(makepamphlet(ourbook.pages, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
+			ourbook.pages.clear();
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
@@ -883,8 +928,21 @@ int main(int argc,char **argv)
 			newname = outstring.substr(0, outstring.size()-4) + appendtofname;
 		}
 
-		vector<Image> loaded = loadpages(finalsegsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
+		//vector<Image> loaded = loadpages(finalsegsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
+		
+		ourbook.printjob.finalpageblank = flastpageblank;
+		ourbook.printjob.extrablanks = fextrablanks;
+		ourbook.printjob.segcount = segcount;
+		ourbook.printjob.thisseg = thisseg;
+		ourbook.printjob.startfrom = firstpage;
+		
+		ourbook.printjob.endat = firstpage + finalsegsize;
+		ourbook.printjob.numstages = numstages;
+		
+		ourbook.load_pages(verbose, bookthief);
+		
+		
+		vector<Image> pamphlet = mayberescale(makepamphlet(ourbook.pages, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
 		
 		if (verbose == true && pdfstdout == false) {
 			cout << endl << "Writing to file..." << endl;

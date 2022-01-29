@@ -1,8 +1,8 @@
 using namespace std;
 
-bool checkin(char* infile, bool speak) {
+bool checkin(string infile, bool speak) {
 	// Infile sanity checks written as an isolated function to be used in both -i and -p cases
-	if (!file_exists(infile)) {
+	if (!file_exists(infile.c_str())) {
 		if (!speak) {
 			return false;
 		}
@@ -10,7 +10,7 @@ bool checkin(char* infile, bool speak) {
 		return false;
 	}
 	
-	if (!has_ending((string)infile, ".pdf")) {
+	if (!has_ending(infile, ".pdf")) {
 		if (!speak) {
 			 return false;
 		}

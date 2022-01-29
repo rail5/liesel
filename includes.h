@@ -32,9 +32,15 @@
 #include "functions/general/file_exists.cpp" // bool Given file exists
 #include "functions/general/iswritable.cpp" // bool Path is writable by effective UID
 
+
+#include "functions/btfunctions/progresscounter.cpp" // void COUTs current progress percentage
+
+/* Classes */
+#include "classes/book.cpp"
+
 /* Liesel-specific includes */
 #include "functions/btfunctions/countpages.cpp" // int Total numbers of pages (first page = 1) of given PDF
-#include "functions/btfunctions/progresscounter.cpp" // void COUTs current progress percentage
+
 #include "functions/btfunctions/loadpages.cpp" // vector<Magick::Image> pages from PDF
 #include "functions/btfunctions/makepamphlet.cpp" // vector<Magick::Image> base booklet
 #include "functions/btfunctions/mayberescale.cpp" // vector<Magick::Image> rescaled (option -t) final booklet
