@@ -141,30 +141,23 @@ int main(int argc,char **argv)
 			{
 				infile = optarg;
 				
-				if (!checkin(infile, true)) {
-					return 1;
-				}
-				
-				Magick::InitializeMagick(*argv);
-	
-				string infilestr(infile);
-				
 				if (checkflag == true) {
 					cout << "OK";
 					return 0;
 				}
-				cout << countpages(infilestr, false, false, false); // -p intentionally does not output a newline to stdout
-				return 0;
+				
+				if (thebook.load_document(infile)) {
+					thebook.count_pages(false);
+					cout << thebook.pagecount;
+					return 0;
+				} else {
+					return 1;
+				}
 				
 				break;
 			}
 			case 'i':
 				infile = optarg;
-				if (!checkin(infile, !optout) && !optout) {
-					return 1;
-				} else if (!checkin(infile, !optout) && optout) {
-					noinfile = true;
-				}
 				receivedinfile = true;
 				break;
 			case 'I':
@@ -367,7 +360,7 @@ int main(int argc,char **argv)
 		}
 	}
 			
-	if (infile == "" && pdfstdin == false) {
+	if (infile == "" && !pdfstdin) {
 		if (!optout) {
 			cerr << helpstring;
 			return 1;
@@ -375,12 +368,12 @@ int main(int argc,char **argv)
 		noinfile = true; // Only set if -B was specified, ie infile not needed
 	}
 	
-	if (infile != "" && pdfstdin == true) {
+	if (infile != "" && pdfstdin) {
 		// Read from provided file by preference rather than STDIN if both -i and -I are supplied
 		pdfstdin = false;
 	}
 	
-	if (outfile == "" && pdfstdout == false) {
+	if (outfile == "" && !pdfstdout) {
 		if (!optout) {
 			cerr << helpstring;
 			return 1;
@@ -388,7 +381,7 @@ int main(int argc,char **argv)
 		nooutfile = true;
 	}
 	
-	if (outfile != "" && pdfstdout == true) {
+	if (outfile != "" && pdfstdout) {
 		pdfstdout = false;
 	}
 	
@@ -409,28 +402,28 @@ int main(int argc,char **argv)
 	if (!optout) {
 		outstring = (string)outfile;
 	
-		if (!has_ending(outstring, ".pdf") && exportflag == false) {
+		if (!has_ending(outstring, ".pdf") && !exportflag) {
 			outstring = outstring + ".pdf";
 		}
 	
-		if (!has_ending(outstring, ".jpeg") && exportflag == true) {
+		if (!has_ending(outstring, ".jpeg") && exportflag) {
 			outstring = outstring + ".jpeg";
 		}
 	
-		if (file_exists(outstring) && overwrite == false) {
+		if (file_exists(outstring) && !overwrite) {
 			cerr << "Error: File '" << outstring << "' already exists!" << endl;
 			return 1;
 		}
 	}
 		
-	if (thebook.properties.dividepages == true && segflag == true) {
+	if (thebook.properties.dividepages && segflag) {
 		segsize = segsize / 2;
 		if (segsize < 4) {
 			segsize = 4;
 		}
 	}
 	
-	if (thebook.properties.cropflag == true) {
+	if (thebook.properties.cropflag) {
 		vector<string> tmpcropvector = explode(crop, ',');
 		if (tmpcropvector.size() != 4) {
 			cerr << "Error: Invalid crop '" << crop << "'" << endl;
@@ -520,7 +513,6 @@ int main(int argc,char **argv)
 	}
 	
 	if (!thebook.load_document(infilestr, pdfstdin)) {
-		cerr << "Fatal error" << endl;
 		return 1;
 	}
 	
@@ -533,7 +525,7 @@ int main(int argc,char **argv)
 	}
 	
 	
-	if (exportflag == true) {
+	if (exportflag) {
 		vector<string> toexport = explode(exportvalue, ',');
 		
 		if (toexport.size() > 2) {
@@ -560,10 +552,6 @@ int main(int argc,char **argv)
 				return 1;
 			}
 			
-	//		finalpageselection.clear();
-		//	finalpageselection.push_back(exportpagetwo-1);
-		//	finalpageselection.push_back(exportpageone-1);
-			
 			string exrange = toexport[1] + "," + toexport[0];
 			if (!thebook.set_pages(true, exrange)) {
 				return 1;
@@ -578,7 +566,7 @@ int main(int argc,char **argv)
 	Magick::InitializeMagick(*argv);
 
 	try {
-		if (rangeflag == true || exportflag == true) {
+		if (rangeflag || exportflag) {
 			pagecount = thebook.selectedpages.size();
 		}
 		
@@ -609,7 +597,7 @@ int main(int argc,char **argv)
 			}
 		}
 		
-		if (checkflag == true) {
+		if (checkflag) {
 			cout << "OK";
 			return 0;
 		}
@@ -622,7 +610,7 @@ int main(int argc,char **argv)
 			revsegsize = segsize + 1;
 		}
 		
-		if (revfinalsegsize % 2 != 0 && exportflag == false) {
+		if (revfinalsegsize % 2 != 0 && !exportflag) {
 			flastpageblank = true;
 			revfinalsegsize = revfinalsegsize + 1;
 		}
@@ -631,7 +619,7 @@ int main(int argc,char **argv)
 			extrablanks = true;
 		}
 		
-		if (revfinalsegsize % 4 != 0 && exportflag == false) {
+		if (revfinalsegsize % 4 != 0 && !exportflag) {
 			fextrablanks = true;
 		}
 		
@@ -657,7 +645,7 @@ int main(int argc,char **argv)
 			thebook.rescale(verbose, bookthief);
 
 			thebook.pages.clear();
-			if (verbose == true) {
+			if (verbose && !pdfstdout) {
 				cout << endl << "Writing to file..." << endl;
 			}
 			if (!pdfstdout) {
@@ -685,7 +673,7 @@ int main(int argc,char **argv)
 				
 			double dpercentdone = (double)thisseg/segcount;
 			int percentdone = floor(dpercentdone * 100);
-			if (bookthief == true && pdfstdout == false) {
+			if (bookthief && !pdfstdout) {
 				cout << percentdone << "%" << endl;
 			}
 				
@@ -720,7 +708,7 @@ int main(int argc,char **argv)
 		
 		thebook.rescale(verbose, bookthief);
 		
-		if (verbose == true && pdfstdout == false) {
+		if (verbose && !pdfstdout) {
 			cout << endl << "Writing to file..." << endl;
 		}
 		
@@ -743,7 +731,7 @@ int main(int argc,char **argv)
 		
 		}
 		
-		if (bookthief == true && pdfstdout == false) {
+		if (bookthief && !pdfstdout) {
 			cout << "100%" << endl;
 		}
 		if (!pdfstdout) {
