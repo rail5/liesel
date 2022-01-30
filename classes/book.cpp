@@ -238,6 +238,245 @@ void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 	}
 }
 
+void Liesel::Book::make_booklet(bool verbose, bool bookthief) {
+	int relevantpagecount = pages.size();
+	int relevantpagecountfromzero = relevantpagecount - 1;
+	
+	int first = 0;
+	int second = relevantpagecountfromzero;
+	
+	int minmargin = properties.widenby;
+	
+	bool local_widenflag = properties.widenflag;
+	int local_widenby = properties.widenby;
+	
+	Magick::Geometry blanksize = Magick::Geometry(50, 50);
+	Magick::Color blankcolor(MaxRGB, MaxRGB, MaxRGB, 0);
+	
+	while (first <= (relevantpagecountfromzero / 2)) {
+		Magick::Image newimg(blanksize, blankcolor);
+		newimg.resolutionUnits(Magick::PixelsPerInchResolution);
+		newimg.density(Magick::Geometry(properties.quality, properties.quality));
+		
+		size_t widthone = pages[pages.size()-1].columns();
+		size_t heightone = pages[pages.size()-1].rows(); // Width and height of the final page in the pages vector
+		
+		size_t widthtwo = pages[0].columns();
+		size_t heighttwo = pages[0].rows(); // Width and height of the first page in the pages vector
+		
+		size_t width = max(widthone, widthtwo) * 2; // Pick the wider of the two, and double that space
+		size_t height = max(heightone, heighttwo); // Pick the higher of the two heights
+		
+		if (heightone != heighttwo || widthone != widthtwo) {
+			Magick::Geometry matchsize = Magick::Geometry(width/2, height);
+			matchsize.aspect(true);
+			pages[pages.size()-1].resize(matchsize);
+			pages[0].resize(matchsize); // Rescale them to be equal sizes
+		}
+		
+		if (properties.automargin) {
+			local_widenflag = true;
+			if (properties.maxmargin != 0) {
+				double widenconst = (double)properties.maxmargin / (double)(relevantpagecountfromzero / 2);
+				local_widenby = first * widenconst;
+			} else {
+				local_widenby = first * 0.35;
+			}
+			
+			if (local_widenby < minmargin) {
+				local_widenby = minmargin;
+			}
+		}
+		
+		double dwidenby = ((width / 4) / 100) * local_widenby;
+		
+		if (local_widenflag) {
+			size_t widthwithmargin = (width / 2) - dwidenby;
+			Magick::Geometry resizedagain = Magick::Geometry(widthwithmargin, height);
+			resizedagain.aspect(true);
+			
+			pages[pages.size()-1].resize(resizedagain);
+			pages[0].resize(resizedagain);
+		}
+		
+		Magick::Geometry newsize = Magick::Geometry(width, height);
+		newsize.aspect(true);
+		
+		newimg.resize(newsize);
+		
+		if (properties.dividepages && printjob.previewonly) {
+			newimg.composite(pages[pages.size()-1], ((width / 2) + (dwidenby * local_widenflag)), 0);
+				/*
+				Same old trick of using a boolean in math
+				If we're not widening, then this goes at position: width/2 + (some amount of widening * 0)
+					ie, width/2
+				Otherwise,
+					width/2 + (some amount of widening * 1)
+				*/
+			newimg.composite(pages[0], 0, 0);
+		} else {
+			newimg.composite(pages[pages.size()-1], 0, 0);
+			newimg.composite(pages[0], ((width / 2) + (dwidenby * local_widenflag)), 0);
+		}
+		
+		if (!printjob.previewonly || printjob.rescaling) {
+			newimg.rotate(90);
+		}
+		
+		booklet.push_back(newimg);
+		
+		if (verbose) {
+			cout << "Combined pages " << second+1 << " and " << first+1 << "... " << flush;
+		}
+		
+		if (bookthief) {
+			double dprog = (double)(first + 1)/((relevantpagecountfromzero / 2) + 1)*100;
+			int prog = floor(dprog);
+			progresscounter(prog, 2, printjob.numstages, printjob.segcount, printjob.thisseg);
+		}
+		
+		newimg.rotate(-90);
+		
+		pages.pop_back(); // Delete the last page from the pages vector
+		pages.erase(pages.begin()); // Delete the first page from the pages vector
+		
+		first = first + 1;
+		second = second - 1;
+		
+		if (first <= (relevantpagecountfromzero / 2)) {
+			newimg = Magick::Image(blanksize, blankcolor);
+			
+			newimg.resolutionUnits(Magick::PixelsPerInchResolution);
+			newimg.density(Magick::Geometry(properties.quality, properties.quality));
+			
+			widthone = pages[pages.size()-1].columns();
+			heightone = pages[pages.size()-1].rows(); // Width and height of the final page in the pages vector
+			
+			widthtwo = pages[0].columns();
+			heighttwo = pages[0].rows(); // Width and height of the first page in the pages vector
+			
+			width = max(widthone, widthtwo) * 2; // Pick the wider of the two, and double that space
+			height = max(heightone, heighttwo); // Pick the higher of the two heights
+			
+			if (heightone != heighttwo || widthone != widthtwo) {
+				Magick::Geometry matchsize = Magick::Geometry(width/2, height);
+				matchsize.aspect(true);
+				pages[pages.size()-1].resize(matchsize);
+				pages[0].resize(matchsize); // Rescale them to be equal sizes
+			}
+			
+			dwidenby = ((width / 4) / 100) * local_widenby;
+			
+			if (local_widenflag) {
+				size_t widthwithmargin = (width / 2) - dwidenby;
+				Magick::Geometry resizedagain = Magick::Geometry(widthwithmargin, height);
+				resizedagain.aspect(true);
+				pages[pages.size()-1].resize(resizedagain);
+				pages[0].resize(resizedagain);
+			}
+			
+			newsize = Magick::Geometry(width, height);
+			newsize.aspect(true);
+			
+			newimg.resize(newsize);
+			
+			newimg.composite(pages[0], 0, 0);
+			newimg.composite(pages[pages.size()-1], ((width / 2) + (dwidenby * local_widenflag)), 0);
+			
+			if (!printjob.landscapeflip) {
+				newimg.rotate(90);
+			} else {
+				newimg.rotate(-90);
+			}
+			
+			booklet.push_back(newimg);
+			
+			if (verbose) {
+				cout << "Combined pages " << first+1 << " and " << second+1 << "... " << flush;
+			}
+			
+			if (bookthief) {
+				double dprog = (double)(first + 1)/((relevantpagecountfromzero / 2) + 1)*100;
+				int prog = floor(dprog);
+				progresscounter(prog, 2, printjob.numstages, printjob.segcount, printjob.thisseg);
+			}
+			
+			newimg.rotate(-90);
+			
+			pages.pop_back();
+			pages.erase(pages.begin());
+			
+			first = first + 1;
+			second = second - 1;
+		}
+		
+	}
+	
+	if (verbose) {
+		cout << endl << "New PDF prepared. Ready to write to file..." << endl;
+	}
+}
+
+void Liesel::Book::rescale(bool verbose, bool bookthief) {
+	int finalpagecount = booklet.size();
+	
+	size_t width = booklet[0].columns();
+	size_t height = booklet[0].rows();
+	
+	if (printjob.rescaling) {
+		size_t newwidth = width;
+		size_t newheight = height;
+		
+		size_t widthmults[10];
+		size_t heightmults[10];
+		
+		for (int x=0;x<10;x++) {
+			widthmults[x] = (x+1)*(properties.quality*printjob.rescale_width);
+			heightmults[x] = (x+1)*(properties.quality*printjob.rescale_height);
+		}
+		
+		int i = 0;
+		while (i < 10) {
+			if ((width <= widthmults[i]) || (height <= heightmults[i])) {
+				newwidth = widthmults[i];
+				newheight = heightmults[i]; // Scale up by preference
+				if (verbose) {
+					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
+				}
+				break;
+			}
+			
+			if ((width - widthmults[i] >= 200) || (height - heightmults[i] >= 200)) {
+				i = i + 1;
+			} else {
+				newwidth = widthmults[i];
+				newheight = heightmults[i];
+				if (verbose) {
+					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
+				}
+				break;
+			}
+		}
+		
+		Magick::Geometry newsize = Magick::Geometry(newwidth, newheight);
+		newsize.aspect(true);
+		
+		for (int y=0;y<finalpagecount;y++) {
+			if (verbose) {
+				cout << "Rescaling page " << y+1 << "... " << flush;
+			}
+			if (bookthief) {
+				double dprog = (double)(y + 1)/(finalpagecount + 1)*100;
+				int prog = floor(dprog);
+				progresscounter(prog, 3, printjob.numstages, printjob.segcount, printjob.thisseg);
+			}
+			
+			booklet[y].resize(newsize);
+			booklet[y].rotate(-90*printjob.previewonly); // Rotate -90*0 = 0 if not previewonly, -90*1 = -90 if previewonly
+		}
+	}
+}
+
 Liesel::Book Liesel::load_book(const string &input, bool pdfstdin, bool speak) {
 	Book newbook;
 	newbook.load_document(input, pdfstdin, speak);

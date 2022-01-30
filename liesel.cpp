@@ -737,7 +737,6 @@ int main(int argc,char **argv)
 		for (int i=0;i<pagecount;i++) {
 			finalpageselection.push_back(i);
 		}
-		rangevalue = (char*)"0"; // needs to be initialized
 	}
 	
 	
@@ -877,21 +876,35 @@ int main(int argc,char **argv)
 
 			ourbook.load_pages(verbose, bookthief);
 			
-			vector<Image> pamphlet = mayberescale(makepamphlet(ourbook.pages, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
+			ourbook.printjob.landscapeflip = landscapeflip;
+			ourbook.properties.widenflag = widenflag;
+			ourbook.properties.widenby = widenby;
+			ourbook.printjob.previewonly = exportflag;
+			ourbook.properties.automargin = automargin;
+			ourbook.properties.maxmargin = maxmargin;
+			
+			ourbook.make_booklet(verbose, bookthief);
+			
+			ourbook.printjob.rescaling = rescaling;
+			ourbook.printjob.rescale_width = outwidth;
+			ourbook.printjob.rescale_height = outheight;
+			
+			ourbook.rescale(verbose, bookthief);
+
 			ourbook.pages.clear();
 			if (verbose == true) {
 				cout << endl << "Writing to file..." << endl;
 			}
 			if (!pdfstdout) {
-				writeImages(pamphlet.begin(), pamphlet.end(), newname);
+				writeImages(ourbook.booklet.begin(), ourbook.booklet.end(), newname);
 			} else {
 				Blob inmemory; // writeImages() will write to this Blob
 			
-				for (long unsigned int i=0;i<pamphlet.size();i++) {
-					pamphlet[i].magick("pdf"); // Explicitly set output type
+				for (long unsigned int i=0;i<ourbook.booklet.size();i++) {
+					ourbook.booklet[i].magick("pdf"); // Explicitly set output type
 				}
 			
-				writeImages(pamphlet.begin(), pamphlet.end(), &inmemory, true); // Write to Blob
+				writeImages(ourbook.booklet.begin(), ourbook.booklet.end(), &inmemory, true); // Write to Blob
 			
 				unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
 		
@@ -902,7 +915,7 @@ int main(int argc,char **argv)
 			}
 				
 				
-			pamphlet.clear(); // clear memory early for the sake of the user's machine, see above
+			ourbook.booklet.clear(); // clear memory early for the sake of the user's machine, see above
 				
 				
 			double dpercentdone = (double)thisseg/segcount;
@@ -941,23 +954,37 @@ int main(int argc,char **argv)
 		
 		ourbook.load_pages(verbose, bookthief);
 		
+		ourbook.printjob.landscapeflip = landscapeflip;
+		ourbook.properties.widenflag = widenflag;
+		ourbook.properties.widenby = widenby;
+		ourbook.printjob.previewonly = exportflag;
+		ourbook.properties.automargin = automargin;
+		ourbook.properties.maxmargin = maxmargin;
 		
-		vector<Image> pamphlet = mayberescale(makepamphlet(ourbook.pages, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
+		ourbook.make_booklet(verbose, bookthief);
+		
+		//vector<Image> pamphlet = mayberescale(ourbook.booklet, rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
+		
+		ourbook.printjob.rescaling = rescaling;
+		ourbook.printjob.rescale_width = outwidth;
+		ourbook.printjob.rescale_height = outheight;
+		
+		ourbook.rescale(verbose, bookthief);
 		
 		if (verbose == true && pdfstdout == false) {
 			cout << endl << "Writing to file..." << endl;
 		}
 		
 		if (!pdfstdout) {
-			writeImages(pamphlet.begin(), pamphlet.end(), newname);
+			writeImages(ourbook.booklet.begin(), ourbook.booklet.end(), newname);
 		} else {
 			Blob inmemory; // writeImages() will write to this Blob
 			
-			for (long unsigned int i=0;i<pamphlet.size();i++) {
-				pamphlet[i].magick("pdf"); // Explicitly set output type
+			for (long unsigned int i=0;i<ourbook.booklet.size();i++) {
+				ourbook.booklet[i].magick("pdf"); // Explicitly set output type
 			}
 			
-			writeImages(pamphlet.begin(), pamphlet.end(), &inmemory, true); // Write to Blob
+			writeImages(ourbook.booklet.begin(), ourbook.booklet.end(), &inmemory, true); // Write to Blob
 			
 			unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
 		

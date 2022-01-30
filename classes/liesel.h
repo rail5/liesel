@@ -13,15 +13,22 @@ namespace Liesel {
 				bool alterthreshold = false;
 				bool cropflag = false;
 				bool dividepages = false;
+				bool widenflag = false;
+				bool automargin = false;
 				
 				int quality = 100;
 				double threshold = 32767.5;
 				vector<int> cropvalues = {0, 0, 0, 0};
+				int widenby = 0;
+				int maxmargin = 0;
 			};
 			
 			struct job {
 				bool finalpageblank = false;
 				bool extrablanks = false;
+				bool landscapeflip = false;
+				bool previewonly = false;
+				bool rescaling = false;
 			
 				int segcount = 1;
 				int numstages = 2;
@@ -29,6 +36,9 @@ namespace Liesel {
 				int thisseg = 1;
 				int startfrom = 1;
 				int endat = 1;
+				
+				double rescale_width = 0.0;
+				double rescale_height = 0.0;
 			};
 			
 		public:
@@ -54,11 +64,19 @@ namespace Liesel {
 				
 				properties.dividepages : boolean = are we dividing each page into 2?
 				
+				properties.widenflag : boolean = are we widening the center margin (the space between left/right-hand pages)?
+				
+				properties.automargin : boolean = are we *progressively* widening the center margin? (wider towards the center of the booklet)
+				
 				properties.quality : integer = PPI / quality
 				
 				properties.threshold : double = the color threshold
 				
 				properties.cropvalues : vector of integers = how much to crop {left, right, top, bottom}
+				
+				properties.widenby : integer = if we're widening the center margin, by how much?
+				
+				properties.maxmargin : integer = if we're *progressively* widening the center margin, what's the maximum? (widenby here acts as the minimum)
 			**********/
 			
 			struct job printjob;
@@ -70,6 +88,13 @@ namespace Liesel {
 				printjob.extrablanks : boolean = do we need to add 2 blank pages to make the count divisible by 4?
 					
 					if both finalpageblank & extrablanks == true, 3 blanks will be appended
+				
+				printjob.landscapeflip : boolean = should we flip every other page 180 degrees? (for long-edge [standard] duplex printing)
+				
+				printjob.previewonly : boolean = are we exporting a preview jpeg rather than processing a full PDF?
+				
+				printjob.rescaling : boolean = did the user request a transform/rescale?
+				
 				
 				printjob.segcount : integer = the total number of segments to be printed
 				
@@ -90,6 +115,11 @@ namespace Liesel {
 					being the 4th (counting from 0) element of the vector
 					
 				printjob.endat : integer = the index, within the selectedpages vector, at which this job is ending
+				
+				
+				printjob.rescale_width : double = (if rescaling) output width
+				
+				printjob.rescale_height : double = (if rescaling) output height
 			**********/
 	
 			bool load_document(const string &input, bool pdfstdin = false, bool speak = true);
@@ -136,6 +166,21 @@ namespace Liesel {
 			void load_pages(bool verbose, bool bookthief);
 			/**********
 				Loads the pages into the pages vector
+			**********/
+			
+			vector<Magick::Image> booklet;
+			/**********
+				Vector of the finished booklet
+			**********/
+			
+			void make_booklet(bool verbose, bool bookthief);
+			/**********
+				Combines the pages from the "pages" vector into a booklet, in the "booklet" vector
+			**********/
+			
+			void rescale(bool verbose, bool bookthief);
+			/**********
+				Rescales output to user-specified arbitrary size (e.g, 8.5x11)
 			**********/
 	};
 	
