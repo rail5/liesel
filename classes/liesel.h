@@ -30,7 +30,6 @@ namespace Liesel {
 				bool rescaling = false;
 			
 				int segcount = 1;
-				int numstages = 2;
 				
 				int thisseg = 1;
 				int startfrom = 1;
@@ -157,6 +156,14 @@ namespace Liesel {
 				Only run AFTER load_document & count_pages, as this has to validate rangevalue against the document's pagecount
 				
 				Returns true on success, false on failure
+			**********/
+			
+			void display_progress(int progress, int stage);
+			/**********
+				Prints current progress to STDOUT
+				
+				int progress = how far along we are in the current operation
+				int stage = which operation? (1 = load_pages, 2 = make_booklet, 3 = rescale)
 			**********/
 			
 			vector<Magick::Image> pages;

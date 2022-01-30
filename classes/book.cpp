@@ -108,6 +108,17 @@ bool Liesel::Book::set_pages(bool rangeflag, string rangevalue) {
 	return true;
 }
 
+void Liesel::Book::display_progress(int progress, int stage) {
+	int number_of_stages = 2 + (1*printjob.rescaling);
+	int progcounter = (progress / number_of_stages) + ((stage - 1) * (100 / number_of_stages)); // Calculate initial value
+	
+	progcounter = (progcounter / printjob.segcount) + ((printjob.thisseg - 1) * (100 / printjob.segcount)); // Divide it, based on the number of segments
+	
+	bool subtractor = progcounter; // Subtract 0 from 0, 1 from 1,2,3,4,etc
+	
+	cout << progcounter-subtractor << "%" << endl;
+}
+
 void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 	if (verbose) {
 		cout << "Ready to load PDF pages" << endl;
@@ -205,7 +216,7 @@ void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 		if (bookthief) {
 			double dprog = (double)(i + 1)/(printjob.endat + 1)*100;
 			int prog = floor(dprog);
-			progresscounter(prog, 1, printjob.numstages, printjob.segcount, printjob.thisseg);
+			display_progress(prog, 1);
 		}
 	}
 	
@@ -334,7 +345,7 @@ void Liesel::Book::make_booklet(bool verbose, bool bookthief) {
 		if (bookthief) {
 			double dprog = (double)(first + 1)/((relevantpagecountfromzero / 2) + 1)*100;
 			int prog = floor(dprog);
-			progresscounter(prog, 2, printjob.numstages, printjob.segcount, printjob.thisseg);
+			display_progress(prog, 2);
 		}
 		
 		newimg.rotate(-90);
@@ -400,7 +411,7 @@ void Liesel::Book::make_booklet(bool verbose, bool bookthief) {
 			if (bookthief) {
 				double dprog = (double)(first + 1)/((relevantpagecountfromzero / 2) + 1)*100;
 				int prog = floor(dprog);
-				progresscounter(prog, 2, printjob.numstages, printjob.segcount, printjob.thisseg);
+				display_progress(prog, 2);
 			}
 			
 			newimg.rotate(-90);
@@ -470,7 +481,7 @@ void Liesel::Book::rescale(bool verbose, bool bookthief) {
 			if (bookthief) {
 				double dprog = (double)(y + 1)/(finalpagecount + 1)*100;
 				int prog = floor(dprog);
-				progresscounter(prog, 3, printjob.numstages, printjob.segcount, printjob.thisseg);
+				display_progress(prog, 3);
 			}
 			
 			booklet[y].resize(newsize);

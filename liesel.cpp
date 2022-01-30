@@ -64,8 +64,6 @@ int main(int argc,char **argv)
 
 	int segsize = 0;
 	
-	int numstages = 2;
-	
 	int minsize = 4;
 	
 	map<string, double> widthpresets;
@@ -247,7 +245,6 @@ int main(int argc,char **argv)
 					thebook.printjob.rescale_width = widthpresets[optarg];
 					thebook.printjob.rescale_height = heightpresets[optarg];
 				}
-				thebook.printjob.numstages = 3;
 				break;
 			case 'v':
 				if (!optout) {
@@ -637,17 +634,6 @@ int main(int argc,char **argv)
 		if (revfinalsegsize % 4 != 0 && exportflag == false) {
 			fextrablanks = true;
 		}
-
-		
-	/*	ourbook.properties.grayscale = grayscale;
-		ourbook.properties.alterthreshold = alterthreshold;
-		ourbook.properties.cropflag = cropflag;
-		ourbook.properties.dividepages = dividepages;
-		ourbook.properties.quality = quality;
-		ourbook.properties.threshold = threshold;
-		ourbook.properties.cropvalues = cropvalues;
-		
-		ourbook.printjob.numstages = numstages; */
 		
 		while (thisseg < segcount) {
 			
@@ -655,7 +641,6 @@ int main(int argc,char **argv)
 				
 			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
 				
-			//vector<Image> loaded = loadpages(segsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
 			
 			thebook.printjob.finalpageblank = lastpageblank;
 			thebook.printjob.extrablanks = extrablanks;
@@ -720,8 +705,6 @@ int main(int argc,char **argv)
 		if (!exportflag) {
 			newname = outstring.substr(0, outstring.size()-4) + appendtofname;
 		}
-
-		//vector<Image> loaded = loadpages(finalsegsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
 		
 		thebook.printjob.finalpageblank = flastpageblank;
 		thebook.printjob.extrablanks = fextrablanks;
@@ -730,13 +713,10 @@ int main(int argc,char **argv)
 		thebook.printjob.startfrom = firstpage;
 		
 		thebook.printjob.endat = firstpage + finalsegsize;
-		thebook.printjob.numstages = numstages;
 		
 		thebook.load_pages(verbose, bookthief);
 		
 		thebook.make_booklet(verbose, bookthief);
-		
-		//vector<Image> pamphlet = mayberescale(ourbook.booklet, rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
 		
 		thebook.rescale(verbose, bookthief);
 		
