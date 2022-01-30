@@ -93,7 +93,7 @@ bool Liesel::Book::set_pages(bool rangeflag, string rangevalue) {
 					return false;
 				}
 				
-				selectedpages.push_back(singlepagerange);
+				selectedpages.push_back(singlepagerange-1);
 			} else {
 				// User inputted two commas by mistake (-r 1-20,21-40,,,,,,44-45)
 				continue;

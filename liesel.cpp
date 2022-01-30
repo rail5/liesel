@@ -293,6 +293,7 @@ int main(int argc,char **argv)
 				break;
 			case 'e':
 				exportflag = true;
+				thebook.printjob.previewonly = true;
 				exportvalue = optarg;
 				break;
 			case 'a':
@@ -566,7 +567,8 @@ int main(int argc,char **argv)
 		//	finalpageselection.push_back(exportpagetwo-1);
 		//	finalpageselection.push_back(exportpageone-1);
 			
-			if (!thebook.set_pages(true, exportvalue)) {
+			string exrange = toexport[1] + "," + toexport[0];
+			if (!thebook.set_pages(true, exrange)) {
 				return 1;
 			}
 			
