@@ -35,6 +35,8 @@ void Liesel::Book::count_pages(bool verbose) {
 }
 		
 bool Liesel::Book::set_pages(bool rangeflag, string rangevalue) {
+	selectedpages.clear();
+	
 	if (rangeflag) {
 		vector<string> multiranges = explode(rangevalue, ',');
 		

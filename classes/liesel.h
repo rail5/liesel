@@ -6,7 +6,6 @@ namespace Liesel {
 
 		private:
 			poppler::document* document;
-			vector<int> selectedpages;
 			
 			struct props {
 				bool grayscale = false;
@@ -17,7 +16,7 @@ namespace Liesel {
 				bool automargin = false;
 				
 				int quality = 100;
-				double threshold = 32767.5;
+				double threshold = MaxRGB / 2;
 				vector<int> cropvalues = {0, 0, 0, 0};
 				int widenby = 0;
 				int maxmargin = 0;
@@ -51,6 +50,8 @@ namespace Liesel {
 			/**********
 				The total number of pages in the PDF, set by count_pages()
 			**********/
+			
+			vector<int> selectedpages;
 			
 			struct props properties;
 			/**********
