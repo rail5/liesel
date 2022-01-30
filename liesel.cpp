@@ -20,9 +20,9 @@ using namespace std;
 int main(int argc,char **argv)
 {
 
-	const string versionstring = "10.0";
+	const string versionstring = "11.0";
 
-	const string helpstring = "Liesel " + versionstring + "\n\nUsage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n  --input\n    PDF to convert\n\n  -o\n  --output\n    New file for converted PDF\n\n  -I\n  --stdin\n    Read PDF from STDIN rather than file\n    e.g: liesel -I -o output.pdf < input.pdf\n\n  -O\n  --stdout\n    Write output PDF to STDOUT rather than file\n    e.g: liesel -i input.pdf -O > output.pdf\n\n  -e\n  --export\n    Export example/preview JPEG image of selected pages\n    e.g: -i infile.pdf -e 5,6 -o preview.jpeg\n    e.g: --input infile.pdf --export 5,6 --output preview.jpeg\n\n  -g\n  --greyscale\n  --grayscale\n    Convert PDF to greyscale/black and white\n\n  -r\n  --range\n    Print only specified range of pages (in the order supplied)\n    e.g: -r 1-12\n    e.g: --range 15-20,25-30\n    e.g: -r 10,9,5,2,1\n    e.g: --range 20-10\n\n  -s\n  --segment\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs of 40 pages each)\n\n  -m\n  --minsize\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n  --force\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n  --verbose\n    Verbose mode\n\n  -b\n  --bookthief\n  --progress\n    Show progress (percentage done)\n\n  -d\n  --density\n  --quality\n  --ppi\n    Specify pixels-per-inch density/quality (default is 100)\n    e.g: -d 200\n\n  -t\n  --transform\n  --rescale\n    Transform output PDF to print on a specific size paper\n      e.g: -t 8.5x11\n\n  -l\n  --landscape\n  --duplex\n    Duplex printer \"landscape\" flipping compatibility\n      (flips every other page)\n\n  -k\n  --threshold\n    Convert to pure black-and-white (not grayscale) with given threshold value between 0-100\n    e.g: -k 70\n      will convert any color with brightness under 70% to pure black, and any brighter color to pure white\n      this option is particularly useful in printing PDFs of scanned books with yellowed pages etc\n\n  -C\n  --crop\n    Crop pages according to specified values\n    e.g: -C 10,20,30,40\n      order: left,right,top,bottom\n      cuts 10% from the left side, 20% from the right side, etc\n\n  -w\n  --widen\n    Widen center margins according to specified value\n    e.g: -w 30\n      (adds blank space between pages)\n\n  -a\n  --auto-widen\n    Auto-widen center margins\n    e.g: -a (completely automatic)\n    e.g: -a 30 (auto, with a maximum of 30)\n      (progressively widens center margins towards the middle of the booklet)\n      (if -w / --widen is also specified, -w / --widen acts as the minimum margin)\n\n  -D\n  --divide\n    Divide each page into two\n      divides the left half and the right half into separate pages\n      this option is particularly useful in printing PDFs of scanned books which haven't already separated the pages\n\n  -p\n  --pages\n    Count pages of input PDF and exit\n\n  -c\n  --check\n    Check validity of command, and do not execute\n\n  -B\n  --output-settings\n    Prints the parameters/settings you've provided in XML format\n\n  -h\n  --help\n    Print this help message\n\n  -q\n  --info\n    Print program info\n\n  -V\n  --version\n    Print version number\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf\n  liesel --input some-book.pdf --range 1,5,7,3,1,50 --landscape --output ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
+	const string helpstring = "Liesel " + versionstring + "\n\nUsage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n  --input\n    PDF to convert\n\n  -o\n  --output\n    New file for converted PDF\n\n  -I\n  --stdin\n    Read PDF from STDIN rather than file\n    e.g: liesel -I -o output.pdf < input.pdf\n\n  -O\n  --stdout\n    Write output PDF to STDOUT rather than file\n    e.g: liesel -i input.pdf -O > output.pdf\n\n  -e\n  --export\n    Export example/preview JPEG image of selected pages\n    e.g: -i infile.pdf -e 5,6 -o preview.jpeg\n    e.g: --input infile.pdf --export 5,6 --output preview.jpeg\n\n  -g\n  --greyscale\n  --grayscale\n    Convert PDF to greyscale/black and white\n\n  -r\n  --range\n    Print only specified range of pages (in the order supplied)\n    e.g: -r 1-12\n    e.g: --range 15-20,25-30\n    e.g: -r 10,9,5,2,1\n    e.g: --range 20-10\n\n  -s\n  --segment\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs of 40 pages each)\n\n  -m\n  --minsize\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n  --force\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n  --verbose\n    Verbose mode\n\n  -b\n  --bookthief\n  --progress\n    Show progress (percentage done)\n\n  -d\n  --density\n  --quality\n  --ppi\n    Specify pixels-per-inch density/quality (default is 100)\n    e.g: -d 200\n\n  -t\n  --transform\n  --rescale\n    Transform output PDF to print on a specific size paper\n      e.g: -t 8.5x11\n\n  -l\n  --landscape\n  --duplex\n    Duplex printer \"landscape\" flipping compatibility\n      (flips every other page)\n\n  -k\n  --threshold\n    Convert to pure black-and-white (not grayscale) with given threshold value between 0-100\n    e.g: -k 70\n      will convert any color with brightness under 70% to pure black, and any brighter color to pure white\n      this option is particularly useful in printing PDFs of scanned books with yellowed pages etc\n\n  -C\n  --crop\n    Crop pages according to specified values\n    e.g: -C 10,20,30,40\n      order: left,right,top,bottom\n      cuts 10% from the left side, 20% from the right side, etc\n\n  -w\n  --widen\n    Widen center margins according to specified value\n    e.g: -w 30\n      (adds blank space between pages)\n\n  -a\n  --auto-widen\n    Auto-widen center margins\n    e.g: -a (completely automatic)\n    e.g: -a 30 (auto, with a maximum of 30)\n      (progressively widens center margins towards the middle of the booklet)\n      (if -w / --widen is also specified, -w / --widen acts as the minimum margin)\n\n  -D\n  --divide\n    Divide each page into two\n      divides the left half and the right half into separate pages\n      this option is particularly useful in printing PDFs of scanned books which haven't already separated the pages\n\n  -N\n  --no-booklet\n  --linear\n    Applies the changes requested (crop, color threshold, etc) and outputs linearly, without making a booklet\n      all features can be used except for center-margin widening\n\n  -p\n  --pages\n    Count pages of input PDF and exit\n\n  -c\n  --check\n    Check validity of command, and do not execute\n\n  -B\n  --output-settings\n    Prints the parameters/settings you've provided in XML format\n\n  -h\n  --help\n    Print this help message\n\n  -q\n  --info\n    Print program info\n\n  -V\n  --version\n    Print version number\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf\n  liesel --input some-book.pdf --range 1,5,7,3,1,50 --landscape --output ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
 	const string infostring = "BookThief + Liesel Copyright (C) 2022 rail5\n" + versionstring + "\n\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. BookThief is a GUI front-end which merely makes calls to Liesel\n2. The source code for both programs is freely available online\n3. Liesel depends on GraphicsMagick and Poppler, two free (GPL V3-compatible) libraries\n";
 
@@ -114,6 +114,8 @@ int main(int argc,char **argv)
 		{"duplex", no_argument, 0, 'l'},
 		{"auto-widen", no_argument, 0, 'a'},
 		{"divide", no_argument, 0, 'D'},
+		{"no-booklet", no_argument, 0, 'N'},
+		{"linear", no_argument, 0, 'N'},
 		{"check", no_argument, 0, 'c'},
 		{"help", no_argument, 0, 'h'},
 		{"info", no_argument, 0, 'q'},
@@ -122,7 +124,7 @@ int main(int argc,char **argv)
 		{0, 0, 0, 0}
 	};
 	
-	while ((c = getopt_long(argc, argv, "a::cIi:Oo:r:s:p:d:t:m:e:k:C:w:ghqfvblDVB", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "a::cIi:Oo:r:s:p:d:t:m:e:k:C:w:ghqfvblDNVB", long_options, &option_index)) != -1)
 		switch(c) {
 			case 'B':
 				optout = true;
@@ -280,6 +282,9 @@ int main(int argc,char **argv)
 				break;
 			case 'D':
 				thebook.properties.dividepages = true;
+				break;
+			case 'N':
+				thebook.printjob.linear_output = true;
 				break;
 			case 'e':
 				exportflag = true;
@@ -464,6 +469,9 @@ int main(int argc,char **argv)
 		}
 		if (thebook.properties.dividepages) {
 			xmloutput = xmloutput + "<divide>on</divide>\n";
+		}
+		if (thebook.printjob.linear_output) {
+			xmloutput = xmloutput + "<linear>on</linear>\n";
 		}
 		if (overwrite) {
 			xmloutput = xmloutput + "<overwrite>on</overwrite>\n";
@@ -668,7 +676,7 @@ int main(int argc,char **argv)
 			}
 				
 				
-			thebook.booklet.clear(); // clear memory early for the sake of the user's machine, see above
+			thebook.booklet.clear(); // clear memory for the sake of the user's machine
 				
 				
 			double dpercentdone = (double)thisseg/segcount;

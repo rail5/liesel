@@ -252,6 +252,12 @@ void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 }
 
 void Liesel::Book::make_booklet(bool verbose, bool bookthief) {
+
+	if (printjob.linear_output) {
+		booklet = move(pages);
+		return;
+	}
+
 	int relevantpagecount = pages.size();
 	int relevantpagecountfromzero = relevantpagecount - 1;
 	

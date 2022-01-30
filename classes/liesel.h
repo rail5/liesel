@@ -28,6 +28,7 @@ namespace Liesel {
 				bool landscapeflip = false;
 				bool previewonly = false;
 				bool rescaling = false;
+				bool linear_output = false;
 			
 				int segcount = 1;
 				
