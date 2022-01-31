@@ -1,9 +1,10 @@
 /***************************************************************
  * Name:      liesel
- * Version:   10.1
- * Author:    rail5 (andrew@rail5.org)
- * Created:   2022-01-27
- * Copyright: rail5 (https://rail5.org)
+ * Version:   11.0
+ * Author:    Andrew S. R. (rail5) (andrew@rail5.org)
+ * Created:   2021-08-14
+ * Updated:   2022-01-30
+ * Copyright: Andrew S. R. (rail5) (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
 
