@@ -1,11 +1,46 @@
 /***************************************************************
  * Name:      liesel
- * Version:   10.1
- * Author:    rail5 (andrew@rail5.org)
- * Created:   2022-01-27
- * Copyright: rail5 (https://rail5.org)
+ * Version:   11.0
+ * Author:    Andrew S. R. (rail5) (andrew@rail5.org)
+ * Created:   2021-08-14
+ * Updated:   2022-01-30
+ * Copyright: Andrew S. R. (rail5) (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
+ 
+ 
+/*
+BASIC PROGRAM STRUCTURE:
+	
+	- Create instance of Liesel::Book class ("thebook")
+	- Read user input, validate user input, apply parameters to thebook.properties & thebook.printjob
+	- Calculate certain aspects of the print job (Printing in segments? If so, how many, etc)
+	- Then, for each segment (or for only 1 segment, if we're not doing segmented printing):
+		- Call thebook.set_pages() to tell it what pages we're handling
+		- Call thebook.load_pages(), which loads the pages into memory and makes most of the requested changes
+		- Call thebook.make_booklet(), which combines those pages as a booklet (and if the user requested center widening, apply that change)
+		- Call thebook.rescale(), which (if the user requested a rescale/transform) rescales the output pages
+		- Write resulting output to {file/stdout}
+*/
+
+/*
+TODO:
+	- Delegate "segmented printing" calculations, etc print job specifications, to the Liesel::Book class
+	
+	- (Big change, hopeful) Implement "pure-PDF" modifications to save dramatically on resource use and execution time
+		At the moment, all pages are rendered by Poppler, and processed as images by GraphicsMagick
+		For some features (color threshold, etc), GraphicsMagick is strictly necessary
+		Ideally, we would only call GraphicsMagick when it's strictly necessary to do so,
+		and otherwise make modifications directly to the PDF without rendering it as an image first
+		
+		At the moment, I'm not sure how to do this. I'm not aware of a (FOSS) C++ library which can modify PDFs in this way (still looking)
+		
+		If this change was implemented, it would result in:
+			1. Much smaller output file size [since the pages wouldn't necessarily be converted to images]
+			2. Much faster execution speed   [since image processing is generally SLOW]
+			3. Much less RAM usage           [since images take up a lot of memory]
+			4. Much less CPU usage           [since image processing is rather intensive]
+*/
 
 #include "includes.h"
 
@@ -20,14 +55,16 @@ using namespace std;
 int main(int argc,char **argv)
 {
 
-	const string versionstring = "10.0";
+	const string versionstring = "11.0";
 
-	const string helpstring = "Liesel " + versionstring + "\n\nUsage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n  --input\n    PDF to convert\n\n  -o\n  --output\n    New file for converted PDF\n\n  -I\n  --stdin\n    Read PDF from STDIN rather than file\n    e.g: liesel -I -o output.pdf < input.pdf\n\n  -O\n  --stdout\n    Write output PDF to STDOUT rather than file\n    e.g: liesel -i input.pdf -O > output.pdf\n\n  -e\n  --export\n    Export example/preview JPEG image of selected pages\n    e.g: -i infile.pdf -e 5,6 -o preview.jpeg\n    e.g: --input infile.pdf --export 5,6 --output preview.jpeg\n\n  -g\n  --greyscale\n  --grayscale\n    Convert PDF to greyscale/black and white\n\n  -r\n  --range\n    Print only specified range of pages (in the order supplied)\n    e.g: -r 1-12\n    e.g: --range 15-20,25-30\n    e.g: -r 10,9,5,2,1\n    e.g: --range 20-10\n\n  -s\n  --segment\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs of 40 pages each)\n\n  -m\n  --minsize\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n  --force\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n  --verbose\n    Verbose mode\n\n  -b\n  --bookthief\n  --progress\n    Show progress (percentage done)\n\n  -d\n  --density\n  --quality\n  --ppi\n    Specify pixels-per-inch density/quality (default is 100)\n    e.g: -d 200\n\n  -t\n  --transform\n  --rescale\n    Transform output PDF to print on a specific size paper\n      e.g: -t 8.5x11\n\n  -l\n  --landscape\n  --duplex\n    Duplex printer \"landscape\" flipping compatibility\n      (flips every other page)\n\n  -k\n  --threshold\n    Convert to pure black-and-white (not grayscale) with given threshold value between 0-100\n    e.g: -k 70\n      will convert any color with brightness under 70% to pure black, and any brighter color to pure white\n      this option is particularly useful in printing PDFs of scanned books with yellowed pages etc\n\n  -C\n  --crop\n    Crop pages according to specified values\n    e.g: -C 10,20,30,40\n      order: left,right,top,bottom\n      cuts 10% from the left side, 20% from the right side, etc\n\n  -w\n  --widen\n    Widen center margins according to specified value\n    e.g: -w 30\n      (adds blank space between pages)\n\n  -a\n  --auto-widen\n    Auto-widen center margins\n    e.g: -a (completely automatic)\n    e.g: -a 30 (auto, with a maximum of 30)\n      (progressively widens center margins towards the middle of the booklet)\n      (if -w / --widen is also specified, -w / --widen acts as the minimum margin)\n\n  -D\n  --divide\n    Divide each page into two\n      divides the left half and the right half into separate pages\n      this option is particularly useful in printing PDFs of scanned books which haven't already separated the pages\n\n  -p\n  --pages\n    Count pages of input PDF and exit\n\n  -c\n  --check\n    Check validity of command, and do not execute\n\n  -B\n  --output-settings\n    Prints the parameters/settings you've provided in XML format\n\n  -h\n  --help\n    Print this help message\n\n  -q\n  --info\n    Print program info\n\n  -V\n  --version\n    Print version number\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf\n  liesel --input some-book.pdf --range 1,5,7,3,1,50 --landscape --output ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
+	const string helpstring = "Liesel " + versionstring + "\n\nUsage:\nliesel -i input-file.pdf -o output-file.pdf\n\nOptions:\n\n  -i\n  --input\n    PDF to convert\n\n  -o\n  --output\n    New file for converted PDF\n\n  -I\n  --stdin\n    Read PDF from STDIN rather than file\n    e.g: liesel -I -o output.pdf < input.pdf\n\n  -O\n  --stdout\n    Write output PDF to STDOUT rather than file\n    e.g: liesel -i input.pdf -O > output.pdf\n\n  -e\n  --export\n    Export example/preview JPEG image of selected pages\n    e.g: -i infile.pdf -e 5,6 -o preview.jpeg\n    e.g: --input infile.pdf --export 5,6 --output preview.jpeg\n\n  -g\n  --greyscale\n  --grayscale\n    Convert PDF to greyscale/black and white\n\n  -r\n  --range\n    Print only specified range of pages (in the order supplied)\n    e.g: -r 1-12\n    e.g: --range 15-20,25-30\n    e.g: -r 10,9,5,2,1\n    e.g: --range 20-10\n\n  -s\n  --segment\n    Print output PDFs in segments of a given size\n    e.g: -s 40\n      (produces multiple PDFs of 40 pages each)\n\n  -m\n  --minsize\n    Specify minimum segment size (default is 4)\n    e.g: -m 8\n\n  -f\n  --force\n    Force overwrites\n      (do not warn about files already existing)\n\n  -v\n  --verbose\n    Verbose mode\n\n  -b\n  --bookthief\n  --progress\n    Show progress (percentage done)\n\n  -d\n  --density\n  --quality\n  --ppi\n    Specify pixels-per-inch density/quality (default is 100)\n    e.g: -d 200\n\n  -t\n  --transform\n  --rescale\n    Transform output PDF to print on a specific size paper\n      e.g: -t 8.5x11\n\n  -l\n  --landscape\n  --duplex\n    Duplex printer \"landscape\" flipping compatibility\n      (flips every other page)\n\n  -k\n  --threshold\n    Convert to pure black-and-white (not grayscale) with given threshold value between 0-100\n    e.g: -k 70\n      will convert any color with brightness under 70% to pure black, and any brighter color to pure white\n      this option is particularly useful in printing PDFs of scanned books with yellowed pages etc\n\n  -C\n  --crop\n    Crop pages according to specified values\n    e.g: -C 10,20,30,40\n      order: left,right,top,bottom\n      cuts 10% from the left side, 20% from the right side, etc\n\n  -w\n  --widen\n    Widen center margins according to specified value\n    e.g: -w 30\n      (adds blank space between pages)\n\n  -a\n  --auto-widen\n    Auto-widen center margins\n    e.g: -a (completely automatic)\n    e.g: -a 30 (auto, with a maximum of 30)\n      (progressively widens center margins towards the middle of the booklet)\n      (if -w / --widen is also specified, -w / --widen acts as the minimum margin)\n\n  -D\n  --divide\n    Divide each page into two\n      divides the left half and the right half into separate pages\n      this option is particularly useful in printing PDFs of scanned books which haven't already separated the pages\n\n  -N\n  --no-booklet\n  --linear\n    Applies the changes requested (crop, color threshold, etc) and outputs linearly, without making a booklet\n      all features can be used except for center-margin widening\n\n  -p\n  --pages\n    Count pages of input PDF and exit\n\n  -c\n  --check\n    Check validity of command, and do not execute\n\n  -B\n  --output-settings\n    Prints the parameters/settings you've provided in XML format\n\n  -h\n  --help\n    Print this help message\n\n  -q\n  --info\n    Print program info\n\n  -V\n  --version\n    Print version number\n\nExample:\n  liesel -i some-book.pdf -g -r 64-77 -f -d 150 -v -b -o ready-to-print.pdf\n  liesel -i some-book.pdf -r 100-300,350-400,1-10 -s 40 -t 8.25x11.75 -m 16 -o ready-to-print.pdf\n  liesel --input some-book.pdf --range 1,5,7,3,1,50 --landscape --output ready-to-print.pdf\n  liesel -p some-book.pdf\n  liesel -c -i some-book.pdf -o output.pdf\n";
 	
 	const string infostring = "BookThief + Liesel Copyright (C) 2022 rail5\n" + versionstring + "\n\nThis program comes with ABSOLUTELY NO WARRANTY.\nThis is free software (GNU GPL V3), and you are welcome to redistribute it under certain conditions.\n\n0. Liesel takes an ordinary PDF and converts it into a booklet-ready PDF to be home-printed\n1. BookThief is a GUI front-end which merely makes calls to Liesel\n2. The source code for both programs is freely available online\n3. Liesel depends on GraphicsMagick and Poppler, two free (GPL V3-compatible) libraries\n";
 
-	bool grayscale = false;
+	Liesel::Book thebook;
+	
 	bool rangeflag = false;
+	
 	bool overwrite = false;
 	bool checkflag = false;
 	bool verbose = false;
@@ -36,14 +73,10 @@ int main(int argc,char **argv)
 	bool flastpageblank = false;
 	bool extrablanks = false;
 	bool fextrablanks = false;
-	bool landscapeflip = false;
-	bool alterthreshold = false;
-	bool cropflag = false;
-	bool widenflag = false;
+	
 	bool exportflag = false;
-	bool dividepages = false;
+	
 	bool segflag = false;
-	bool automargin = false;
 	
 	bool optout = false;
 	bool noinfile = false;
@@ -52,37 +85,22 @@ int main(int argc,char **argv)
 	bool receivedinfile = false;
 	bool pdfstdin = false;
 	bool pdfstdout = false;
+	
 	string binaryinput = "";
 	
-	char *infile = NULL;
-	char *outfile = NULL;
-	char *rangevalue = NULL;
-	char *exportvalue = NULL;
+	string infile = "";
+	string outfile = "";
+	string rangevalue = "";
+	string exportvalue = "";
 	
 	string kparam = "";
 	
 	string crop = "0,0,0,0";
-	vector<int> cropvalues = {0, 0, 0, 0};
-	
-	int widenby = 0;
-	
-	int maxmargin = 0;
 
 	int segsize = 0;
 	
-	vector<int> finalpageselection;
-	
-	int numstages = 2;
-	
-	int quality = 100;
-	
 	int minsize = 4;
 	
-	double threshold = 32767.5;
-
-	bool rescaling = false;
-	double outwidth;
-	double outheight;
 	map<string, double> widthpresets;
 	map<string, double> heightpresets;
 	
@@ -94,110 +112,6 @@ int main(int argc,char **argv)
 
 	
 	/************
-	grayscale:
-		A flag tripped when the user types -g
-		If this flag is tripped to return "true," Liesel converts an inputted color PDF to black&white
-	
-	rangeflag:
-		A flag tripped when the user specifies a range with -r
-		If this flag is tripped to return "true," Liesel first checks the validity of the range, and then modifies the call to loadpages() with the range-specific info
-		
-	overwrite:
-		A flag tripped when the user types -f
-		If this flag is tripped to return "true," Liesel doesn't make a fuss about output files already existing, and just overwrites them
-		
-	checkflag:
-		A flag tripped when the user types -c
-		If this flag is tripped to return "true," Liesel checks whether the command is valid, and halts before execution (does NOT execute the command issued). Liesel returns either a specific error, or "OK" (intentionally does not output newline to stdout)
-		
-	verbose:
-		A flag tripped when the user types -v
-		This flag is passed to the countpages(), loadpages() and makepamphlet() functions (see functions/btfunctions.h), if true, these functions will write to stdout each step of the way (loaded page 1, loaded page 2, etc)
-		Added on 2021-08-27
-	
-	bookthief:
-		Flag tripped if the user types -b
-		The -b option is automatically added when a command is called by the BookThief GUI frontend (>= 4.5)
-		This is similar to Verbose, except rather than printing "Loading page 3..." it prints, for example, "3%", which BookThief then uses to update a moving progress bar.
-		
-	lastpageblank / flastpageblank:
-		If Liesel receives an odd number of input pages, this flag is tripped, and a blank page is added to the end to make sure that everything prints correctly
-		
-	extrablanks / fextrablanks:
-		Suppose that the input Liesel gets has a page-count which is not divisible by 4
-		Well, Liesel increments odd page counts by 1 (see lastpageblank above), but even that doesn't guarantee the number will be divisible by 4 --
-			(meaning, 2 pages front & back per sheet of paper)
-		Any printer will simply leave the backside of the final sheet blank -- ie, it will put 2 blank pages right in the middle of your booklet
-		In order to avoid that, this "extrablanks" flag is tripped when the final page count % 4 != 0, and loadpages() "adds" 2 blank pages to the end (ie, really moves them away from the -middle- of your booklet, by adding them to the end of the output PDF file)
-	
-	infile/outfile:
-		Self-explanatory
-		infile must be verified to exist, outfile must be verified to not exist
-	
-	rangevalue:
-		a string like this, for example:
-			52-62
-		If -r is specified, Liesel splits the string first by commas (ie, -r 1-4,9-13,7 becomes "1-4" + "9-13" + "7")
-		then splits each of those into the page numbers alone, and only handles that range/subset of pages from the inputted PDF.
-	
-	finalpageselection:
-		A vector of all the page numbers, in order, that will be processed
-		ie, if the user types -r 1-10
-		the vector will be populated with: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
-		if the user types -r 1-4,2,7-9,350
-		the vector will be populated with: 0, 1, 2, 3, 2, 6, 7, 8, 349
-		
-		It's worth noting that even though we humans count pages starting from 1, computers count them from 0
-		But if you're reading the comments in this source code I probably don't need to tell you that
-		
-	numstages:
-		For the progress counter (-b)
-		Normally, there are 2 'stages' to exection: loading pages, and then combining pages
-		The progress counter then divides the 'amount done' by the number of stages
-			ie, 100% done with page loading, 1st stage out of 2, so we're 50% done
-		If the user specifies a transform with -t, that becomes 3 stages instead of 2
-		See void progresscounter() in functions/btfunctions.h for detail
-		
-	quality:
-		Number inputted via -d option
-		Passed to loadpages() function in functions/btfunctions.h
-		Determines Magick++ API's "Quality" measure as well as pixel density
-		Initialized at 100 (default)
-		If input value is less than 75, quality is set to 75
-		(Lower values can cause trouble with Magick++)
-		Recommended not to use values higher than 300 (could crash, uses up a lot of memory -- if your computer can handle it, then by all means, go for it)
-		
-	minsize:
-		When printing in segments, -m specifies the minimum segment size (default at 4 pages)
-		
-			i.e., say you're printing a 203-page book in 40 pages per segment (with -s 40)
-			
-				with the default minsize (4),
-					5 segments of 40 would leave only 3 pages remaining,
-					so with a minsize of 4, you have 4 segments of 40, and 1 final segment of 43
-					
-					
-			say you're printing a 207-page book in 40 pages per segment
-			
-				with the default minsize of 4,
-					you have 5 segments of 40 + 1 final segment of 7
-					
-				changing the minsize to 8, for example, would tack those 7 pages on to the penultimate segment
-			
-			
-			4 is a reasonable minsize for most practical domestic applications --
-				if you're printing at home, with an ordinary household printer, and an ordinary household stapler,
-					-s 40 -m 4 is perfectly reasonable
-					
-			however, for more advanced or industrial applications you may decide on:
-					-s 160 -m 16, for example
-	
-	
-	rescaling / outwidth/outheight / widthpresets / heightpresets:
-		The first: A boolean activated if the user types -t
-		The second (pair): The width/height in inches to transform to
-		The third (pair): A set of presets (currently us-letter and a4)
-		The first and second(pair) are passed to mayberescale() in functions/btfunctions.h
 	************/
 	int c;
 	
@@ -235,6 +149,8 @@ int main(int argc,char **argv)
 		{"duplex", no_argument, 0, 'l'},
 		{"auto-widen", no_argument, 0, 'a'},
 		{"divide", no_argument, 0, 'D'},
+		{"no-booklet", no_argument, 0, 'N'},
+		{"linear", no_argument, 0, 'N'},
 		{"check", no_argument, 0, 'c'},
 		{"help", no_argument, 0, 'h'},
 		{"info", no_argument, 0, 'q'},
@@ -243,7 +159,7 @@ int main(int argc,char **argv)
 		{0, 0, 0, 0}
 	};
 	
-	while ((c = getopt_long(argc, argv, "a::cIi:Oo:r:s:p:d:t:m:e:k:C:w:ghqfvblDVB", long_options, &option_index)) != -1)
+	while ((c = getopt_long(argc, argv, "a::cIi:Oo:r:s:p:d:t:m:e:k:C:w:ghqfvblDNVB", long_options, &option_index)) != -1)
 		switch(c) {
 			case 'B':
 				optout = true;
@@ -253,7 +169,7 @@ int main(int argc,char **argv)
 				checkflag = true;
 				break;
 			case 'g':
-				grayscale = true;
+				thebook.properties.grayscale = true;
 				break;
 			case 'f':
 				overwrite = true;
@@ -262,30 +178,23 @@ int main(int argc,char **argv)
 			{
 				infile = optarg;
 				
-				if (!checkin(infile, true)) {
-					return 1;
-				}
-				
-				InitializeMagick(*argv);
-	
-				string infilestr(infile);
-				
 				if (checkflag == true) {
 					cout << "OK";
 					return 0;
 				}
-				cout << countpages(infilestr, false, false, false); // -p intentionally does not output a newline to stdout
-				return 0;
+				
+				if (thebook.load_document(infile)) {
+					thebook.count_pages(false);
+					cout << thebook.pagecount;
+					return 0;
+				} else {
+					return 1;
+				}
 				
 				break;
 			}
 			case 'i':
 				infile = optarg;
-				if (!checkin(infile, !optout) && !optout) {
-					return 1;
-				} else if (!checkin(infile, !optout) && optout) {
-					noinfile = true;
-				}
 				receivedinfile = true;
 				break;
 			case 'I':
@@ -333,10 +242,10 @@ int main(int argc,char **argv)
 					return 1;
 				}
 				
-				quality = stoi(optarg);
+				thebook.properties.quality = stoi(optarg);
 				
-				if (quality < 75) {
-					quality = 75;
+				if (thebook.properties.quality < 75) {
+					thebook.properties.quality = 75;
 				}
 				break;
 			case 't':
@@ -357,16 +266,15 @@ int main(int argc,char **argv)
 						return 1;
 					}
 					
-					rescaling = true;
-					outwidth = stod(customsize[0]);
-					outheight = stod(customsize[1]);
+					thebook.printjob.rescaling = true;
+					thebook.printjob.rescale_width = stod(customsize[0]);
+					thebook.printjob.rescale_height = stod(customsize[1]);
 					
 				} else {
-					rescaling = true;
-					outwidth = widthpresets[optarg];
-					outheight = heightpresets[optarg];
+					thebook.printjob.rescaling = true;
+					thebook.printjob.rescale_width = widthpresets[optarg];
+					thebook.printjob.rescale_height = heightpresets[optarg];
 				}
-				numstages = 3;
 				break;
 			case 'v':
 				if (!optout) {
@@ -377,53 +285,52 @@ int main(int argc,char **argv)
 				bookthief = true;
 				break;
 			case 'l':
-				landscapeflip = true;
+				thebook.printjob.landscapeflip = true;
 				break;
 			case 'k':
-				alterthreshold = true;
+				thebook.properties.alterthreshold = true;
 				if (!is_number(optarg)) {
 					cerr << "Error: Invalid (non-numeric) threshold supplied '" << optarg << "'" << endl;
 					return 1;
 				}
 				kparam = optarg;
-				#ifdef _WIN32
-				threshold = stod(optarg) * 2.55;
-				// MaxRGB on Windows is 255 (therefore -k 100 should = -k 255)
-				#else
-				// MaxRGB on *Nix is 65535 (etc)
-				threshold = stod(optarg) * 655.35;
-				#endif
+				
+				thebook.properties.threshold = stod(optarg) * (MaxRGB / 100); // Different on Windows vs *Nix
 				break;
 			case 'C':
-				cropflag = true;
-				crop = (string)optarg;
+				thebook.properties.cropflag = true;
+				crop = optarg;
 				break;
 			case 'w':
-				widenflag = true;
+				thebook.properties.widenflag = true;
 				
 				if (!is_number(optarg)) {
 					cerr << "Error: Invalid (non-numeric) margin '" << optarg << "'" << endl;
 					return 1;
 				}
 				
-				widenby = stoi(optarg);
+				thebook.properties.widenby = stoi(optarg);
 				
-				if (widenby > 100) {
-					widenby = 100;
+				if (thebook.properties.widenby > 100) {
+					thebook.properties.widenby = 100;
 				}
 				break;
 			case 'D':
-				dividepages = true;
+				thebook.properties.dividepages = true;
+				break;
+			case 'N':
+				thebook.printjob.linear_output = true;
 				break;
 			case 'e':
 				exportflag = true;
+				thebook.printjob.previewonly = true;
 				exportvalue = optarg;
 				break;
 			case 'a':
-				automargin = true;
+				thebook.properties.automargin = true;
 				if (HAS_OPTIONAL_ARGUMENT) {
 					if (is_number(optarg)) {
-						maxmargin = stoi(optarg);
+						thebook.properties.maxmargin = stoi(optarg);
 					} else {
 						cerr << "Error: Invalid (non-numeric) maximum margin '" << optarg << "'" << endl;
 						return 1;
@@ -493,7 +400,7 @@ int main(int argc,char **argv)
 		}
 	}
 			
-	if (infile == NULL && pdfstdin == false) {
+	if (infile == "" && !pdfstdin) {
 		if (!optout) {
 			cerr << helpstring;
 			return 1;
@@ -501,12 +408,12 @@ int main(int argc,char **argv)
 		noinfile = true; // Only set if -B was specified, ie infile not needed
 	}
 	
-	if (infile != NULL && pdfstdin == true) {
+	if (infile != "" && pdfstdin) {
 		// Read from provided file by preference rather than STDIN if both -i and -I are supplied
 		pdfstdin = false;
 	}
 	
-	if (outfile == NULL && pdfstdout == false) {
+	if (outfile == "" && !pdfstdout) {
 		if (!optout) {
 			cerr << helpstring;
 			return 1;
@@ -514,12 +421,11 @@ int main(int argc,char **argv)
 		nooutfile = true;
 	}
 	
-	if (outfile != NULL && pdfstdout == true) {
+	if (outfile != "" && pdfstdout) {
 		pdfstdout = false;
 	}
 	
 	if (pdfstdout) {
-		outfile = (char*)"0"; // needs to be initialized
 		
 		verbose = false;
 		bookthief = false;
@@ -530,37 +436,34 @@ int main(int argc,char **argv)
 		
 	}
 	
-	if (pdfstdin) {
-		infile = (char*)"0"; // also needs to be initialized
-	}
-	
+
 	string outstring;
 	
 	if (!optout) {
 		outstring = (string)outfile;
 	
-		if (!has_ending(outstring, ".pdf") && exportflag == false) {
+		if (!has_ending(outstring, ".pdf") && !exportflag) {
 			outstring = outstring + ".pdf";
 		}
 	
-		if (!has_ending(outstring, ".jpeg") && exportflag == true) {
+		if (!has_ending(outstring, ".jpeg") && exportflag) {
 			outstring = outstring + ".jpeg";
 		}
 	
-		if (file_exists(outstring) && overwrite == false) {
+		if (file_exists(outstring) && !overwrite) {
 			cerr << "Error: File '" << outstring << "' already exists!" << endl;
 			return 1;
 		}
 	}
 		
-	if (dividepages == true && segflag == true) {
+	if (thebook.properties.dividepages && segflag) {
 		segsize = segsize / 2;
 		if (segsize < 4) {
 			segsize = 4;
 		}
 	}
 	
-	if (cropflag == true) {
+	if (thebook.properties.cropflag) {
 		vector<string> tmpcropvector = explode(crop, ',');
 		if (tmpcropvector.size() != 4) {
 			cerr << "Error: Invalid crop '" << crop << "'" << endl;
@@ -572,10 +475,10 @@ int main(int argc,char **argv)
 			return 1;
 		}
 		
-		cropvalues[0] = stoi(tmpcropvector[0]);
-		cropvalues[1] = stoi(tmpcropvector[1]);
-		cropvalues[2] = stoi(tmpcropvector[2]);
-		cropvalues[3] = stoi(tmpcropvector[3]);
+		thebook.properties.cropvalues[0] = stoi(tmpcropvector[0]);
+		thebook.properties.cropvalues[1] = stoi(tmpcropvector[1]);
+		thebook.properties.cropvalues[2] = stoi(tmpcropvector[2]);
+		thebook.properties.cropvalues[3] = stoi(tmpcropvector[3]);
 	
 	}
 	
@@ -587,11 +490,11 @@ int main(int argc,char **argv)
 		if (!nooutfile) {
 			xmloutput = xmloutput + "<outfile>" + outfile + "</outfile>\n";
 		}
-		if (automargin) {
-			xmloutput = xmloutput + "<automargin>" + to_string(maxmargin) + "</automargin>\n";
+		if (thebook.properties.automargin) {
+			xmloutput = xmloutput + "<automargin>" + to_string(thebook.properties.maxmargin) + "</automargin>\n";
 		}
-		if (widenflag) {
-			xmloutput = xmloutput + "<widen>" + to_string(widenby) + "</widen>\n";
+		if (thebook.properties.widenflag) {
+			xmloutput = xmloutput + "<widen>" + to_string(thebook.properties.widenby) + "</widen>\n";
 		}
 		if (bookthief) {
 			xmloutput = xmloutput + "<bookthief>on</bookthief>\n";
@@ -599,19 +502,22 @@ int main(int argc,char **argv)
 		if (crop != "0,0,0,0") {
 			xmloutput = xmloutput + "<crop>" + crop + "</crop>\n";
 		}
-		if (dividepages) {
+		if (thebook.properties.dividepages) {
 			xmloutput = xmloutput + "<divide>on</divide>\n";
+		}
+		if (thebook.printjob.linear_output) {
+			xmloutput = xmloutput + "<linear>on</linear>\n";
 		}
 		if (overwrite) {
 			xmloutput = xmloutput + "<overwrite>on</overwrite>\n";
 		}
-		if (grayscale) {
+		if (thebook.properties.grayscale) {
 			xmloutput = xmloutput + "<grayscale>on</grayscale>\n";
 		}
-		if (alterthreshold) {
+		if (thebook.properties.alterthreshold) {
 			xmloutput = xmloutput + "<threshold>" + kparam + "</threshold>\n";
 		}
-		if (landscapeflip) {
+		if (thebook.printjob.landscapeflip) {
 			xmloutput = xmloutput + "<longedge>on</longedge>\n";
 		}
 		if (rangeflag) {
@@ -620,9 +526,9 @@ int main(int argc,char **argv)
 		if (segflag) {
 			xmloutput = xmloutput + "<segment>" + to_string(segsize) + "</segment>\n";
 		}
-		if (rescaling) {
-			string stroutwidth = to_string(outwidth);
-			string stroutheight = to_string(outheight);
+		if (thebook.printjob.rescaling) {
+			string stroutwidth = to_string(thebook.printjob.rescale_width);
+			string stroutheight = to_string(thebook.printjob.rescale_height);
 			while (has_ending(stroutwidth, "0") && !has_ending(stroutwidth, ".0")) {
 				stroutwidth.pop_back();
 			}
@@ -633,7 +539,7 @@ int main(int argc,char **argv)
 			xmloutput = xmloutput + "<transform>" + stroutwidth + "x" + stroutheight + "</transform>\n";
 		}
 		xmloutput = xmloutput + "<minsize>" + to_string(minsize) + "</minsize>\n";
-		xmloutput = xmloutput + "<quality>" + to_string(quality) + "</quality>\n";
+		xmloutput = xmloutput + "<quality>" + to_string(thebook.properties.quality) + "</quality>\n";
 		
 		xmloutput = xmloutput + "</settings>";
 		
@@ -648,84 +554,21 @@ int main(int argc,char **argv)
 	} else {
 		infilestr = binaryinput;
 	}
-	int pagecount = countpages(infilestr, verbose, checkflag, pdfstdin);
 	
-	if (rangeflag == true) {
-	
-		vector<string> multiranges = explode(rangevalue, ','); // Permitting multi-range printing (ie, -r 1-10,30-40,42-46) separated by commas
-		
-		
-		
-		for (long unsigned int i=0;i<multiranges.size();i++) {
-		
-			vector<string> singlerange = explode(multiranges[i], '-');
-			
-			if (singlerange.size() > 2) {
-				cerr << "Error: Invalid range '" << multiranges[i] << "'" << endl;
-				return 1;
-			}
-			
-			if (singlerange.size() > 1) {
-			
-				if (!is_number(singlerange[0]) || !is_number(singlerange[1])) {
-					cerr << "Error: Invalid (non-numeric) range '" << multiranges[i] << "'" << endl;
-					return 1;
-				}
-			
-				int startpage = stoi(singlerange[0]);
-				int endpage = stoi(singlerange[1]);
-			
-				if (startpage == endpage || startpage == 0 || endpage == 0) {
-					cerr << "Error: Invalid range '" << multiranges[i] << "'" << endl;
-					return 1;
-				}
-				
-				
-				if (max(startpage,endpage) > pagecount) {
-					cerr << "Error: Given range value '" << multiranges[i] << "' out of range for supplied PDF" << endl;
-					return 1;
-				}
-				
-				
-				for (int x=startpage-1;x>=endpage-1;x--) {
-					finalpageselection.push_back(x); // Descending ranges (ie, -r 10-1)
-				}
-				
-				for (int x=startpage-1;x<endpage;x++) {
-					finalpageselection.push_back(x); // Ascending (normal) ranges (ie, -r 1-10)
-				}
-			
-			} else if (singlerange.size() == 1) {
-				if (!is_number(singlerange[0])) {
-					cerr << "Error: Invalid (non-numeric) range '" << multiranges[i] << "'" << endl;
-					return 1;
-				}
-				
-				int singlepagerange = stoi(singlerange[0]);
-				if (singlepagerange > pagecount) {
-					cerr << "Error: Page '" << singlepagerange << "' out of range for supplied PDF" << endl;
-					return 1;
-				}
-				
-				if (singlepagerange == 0) {
-					cerr << "Error: Invalid page '0'" << endl;
-					return 1;
-				}
-				
-				finalpageselection.push_back(singlepagerange-1);
-			} else {
-				continue; // User inputted two commas by mistake (-r 1-20,21-40,,,,,,44-45)
-			}
-		
-		}
-
-	} else {
-		for (int i=0;i<pagecount;i++) {
-			finalpageselection.push_back(i);
-		}
+	if (!thebook.load_document(infilestr, pdfstdin)) {
+		return 1;
 	}
 	
-	if (exportflag == true) {
+	thebook.count_pages(verbose);
+	
+	int pagecount = thebook.pagecount;
+	
+	if (!thebook.set_pages(rangeflag, rangevalue)) {
+		return 1;
+	}
+	
+	
+	if (exportflag) {
 		vector<string> toexport = explode(exportvalue, ',');
 		
 		if (toexport.size() > 2) {
@@ -752,9 +595,10 @@ int main(int argc,char **argv)
 				return 1;
 			}
 			
-			finalpageselection.clear();
-			finalpageselection.push_back(exportpagetwo-1);
-			finalpageselection.push_back(exportpageone-1);
+			string exrange = toexport[1] + "," + toexport[0];
+			if (!thebook.set_pages(true, exrange)) {
+				return 1;
+			}
 			
 		} else {
 			cerr << "Error: You must select 2 pages for export" << endl;
@@ -762,11 +606,11 @@ int main(int argc,char **argv)
 		}
 	}
 	
-	InitializeMagick(*argv);
+	Magick::InitializeMagick(*argv);
 
 	try {
-		if (rangeflag == true || exportflag == true) {
-			pagecount = finalpageselection.size();
+		if (rangeflag || exportflag) {
+			pagecount = thebook.selectedpages.size();
 		}
 		
 		if (segsize > pagecount || segsize == 0) {
@@ -796,20 +640,20 @@ int main(int argc,char **argv)
 			}
 		}
 		
-		if (checkflag == true) {
+		if (checkflag) {
 			cout << "OK";
 			return 0;
 		}
 		
 		int revsegsize = segsize;
-		int revfinalsegsize = finalsegsize + (finalsegsize * dividepages);
+		int revfinalsegsize = finalsegsize + (finalsegsize * thebook.properties.dividepages);
 		
 		if (segsize % 2 != 0) {
 			lastpageblank = true;
 			revsegsize = segsize + 1;
 		}
 		
-		if (revfinalsegsize % 2 != 0 && exportflag == false) {
+		if (revfinalsegsize % 2 != 0 && !exportflag) {
 			flastpageblank = true;
 			revfinalsegsize = revfinalsegsize + 1;
 		}
@@ -818,12 +662,9 @@ int main(int argc,char **argv)
 			extrablanks = true;
 		}
 		
-		if (revfinalsegsize % 4 != 0 && exportflag == false) {
+		if (revfinalsegsize % 4 != 0 && !exportflag) {
 			fextrablanks = true;
 		}
-
-		
-		
 		
 		while (thisseg < segcount) {
 			
@@ -831,22 +672,35 @@ int main(int argc,char **argv)
 				
 			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
 				
-			vector<Image> loaded = loadpages(segsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, lastpageblank, extrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-			vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
-			loaded.clear();
-			if (verbose == true) {
+			
+			thebook.printjob.finalpageblank = lastpageblank;
+			thebook.printjob.extrablanks = extrablanks;
+			thebook.printjob.segcount = segcount;
+			thebook.printjob.thisseg = thisseg;
+			thebook.printjob.startfrom = firstpage;
+			
+			thebook.printjob.endat = firstpage + segsize;
+
+			thebook.load_pages(verbose, bookthief);
+			
+			thebook.make_booklet(verbose, bookthief);
+			
+			thebook.rescale(verbose, bookthief);
+
+			thebook.pages.clear();
+			if (verbose && !pdfstdout) {
 				cout << endl << "Writing to file..." << endl;
 			}
 			if (!pdfstdout) {
-				writeImages(pamphlet.begin(), pamphlet.end(), newname);
+				writeImages(thebook.booklet.begin(), thebook.booklet.end(), newname);
 			} else {
-				Blob inmemory; // writeImages() will write to this Blob
+				Magick::Blob inmemory; // writeImages() will write to this Blob
 			
-				for (long unsigned int i=0;i<pamphlet.size();i++) {
-					pamphlet[i].magick("pdf"); // Explicitly set output type
+				for (long unsigned int i=0;i<thebook.booklet.size();i++) {
+					thebook.booklet[i].magick("pdf"); // Explicitly set output type
 				}
 			
-				writeImages(pamphlet.begin(), pamphlet.end(), &inmemory, true); // Write to Blob
+				writeImages(thebook.booklet.begin(), thebook.booklet.end(), &inmemory, true); // Write to Blob
 			
 				unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
 		
@@ -857,12 +711,12 @@ int main(int argc,char **argv)
 			}
 				
 				
-			pamphlet.clear(); // clear memory early for the sake of the user's machine, see above
+			thebook.booklet.clear(); // clear memory for the sake of the user's machine
 				
 				
 			double dpercentdone = (double)thisseg/segcount;
 			int percentdone = floor(dpercentdone * 100);
-			if (bookthief == true && pdfstdout == false) {
+			if (bookthief && !pdfstdout) {
 				cout << percentdone << "%" << endl;
 			}
 				
@@ -882,24 +736,35 @@ int main(int argc,char **argv)
 		if (!exportflag) {
 			newname = outstring.substr(0, outstring.size()-4) + appendtofname;
 		}
-
-		vector<Image> loaded = loadpages(finalsegsize, infilestr, pdfstdin, firstpage, finalpageselection, grayscale, alterthreshold, threshold, cropflag, cropvalues, dividepages, flastpageblank, fextrablanks, verbose, bookthief, segcount, thisseg, quality, numstages);
-		vector<Image> pamphlet = mayberescale(makepamphlet(loaded, verbose, bookthief, segcount, thisseg, numstages, landscapeflip, quality, widenflag, widenby, exportflag, dividepages, automargin, maxmargin), rescaling, outwidth, outheight, quality, verbose, bookthief, segcount, thisseg, numstages, exportflag);
 		
-		if (verbose == true && pdfstdout == false) {
+		thebook.printjob.finalpageblank = flastpageblank;
+		thebook.printjob.extrablanks = fextrablanks;
+		thebook.printjob.segcount = segcount;
+		thebook.printjob.thisseg = thisseg;
+		thebook.printjob.startfrom = firstpage;
+		
+		thebook.printjob.endat = firstpage + finalsegsize;
+		
+		thebook.load_pages(verbose, bookthief);
+		
+		thebook.make_booklet(verbose, bookthief);
+		
+		thebook.rescale(verbose, bookthief);
+		
+		if (verbose && !pdfstdout) {
 			cout << endl << "Writing to file..." << endl;
 		}
 		
 		if (!pdfstdout) {
-			writeImages(pamphlet.begin(), pamphlet.end(), newname);
+			writeImages(thebook.booklet.begin(), thebook.booklet.end(), newname);
 		} else {
-			Blob inmemory; // writeImages() will write to this Blob
+			Magick::Blob inmemory; // writeImages() will write to this Blob
 			
-			for (long unsigned int i=0;i<pamphlet.size();i++) {
-				pamphlet[i].magick("pdf"); // Explicitly set output type
+			for (long unsigned int i=0;i<thebook.booklet.size();i++) {
+				thebook.booklet[i].magick("pdf"); // Explicitly set output type
 			}
 			
-			writeImages(pamphlet.begin(), pamphlet.end(), &inmemory, true); // Write to Blob
+			writeImages(thebook.booklet.begin(), thebook.booklet.end(), &inmemory, true); // Write to Blob
 			
 			unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
 		
@@ -909,7 +774,7 @@ int main(int argc,char **argv)
 		
 		}
 		
-		if (bookthief == true && pdfstdout == false) {
+		if (bookthief && !pdfstdout) {
 			cout << "100%" << endl;
 		}
 		if (!pdfstdout) {
@@ -918,7 +783,7 @@ int main(int argc,char **argv)
 		return 0;
 		
 	}
-	catch( Exception &error_ )
+	catch( Magick::Exception &error_ )
 	{
 		cerr << "Error:\n" << error_.what() << endl;
 		return 1;
