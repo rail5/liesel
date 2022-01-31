@@ -37,7 +37,4 @@
 #include "classes/book.cpp"
 
 /* Liesel-specific includes */
-#include "functions/btfunctions/countpages.cpp" // int Total numbers of pages (first page = 1) of given PDF
-
-#include "functions/btfunctions/checkin.cpp" // bool Input file is sane (file exists, is a PDF)
 #include "functions/btfunctions/checksegout.cpp" // bool Segmented output files don't already exist (unless -f is specified)

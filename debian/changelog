@@ -1,3 +1,13 @@
+liesel (11.0) focal; urgency=low
+
+  * Added new -N feature, which applies requested changes
+  but does not make a booklet
+  Dramatically restructured the code to be more object-oriented
+  to make for easier changes in the future
+  Patched a few bugs along the way
+
+ -- rail5 <andrew@rail5.org>  Sun, 30 Jan 19:32:22 -0500
+
 liesel (10.1) focal; urgency=low
 
   * Shipping previous change
