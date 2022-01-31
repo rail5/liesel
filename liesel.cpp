@@ -7,6 +7,40 @@
  * Copyright: Andrew S. R. (rail5) (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
+ 
+ 
+/*
+BASIC PROGRAM STRUCTURE:
+	
+	- Create instance of Liesel::Book class ("thebook")
+	- Read user input, validate user input, apply parameters to thebook.properties & thebook.printjob
+	- Calculate certain aspects of the print job (Printing in segments? If so, how many, etc)
+	- Then, for each segment (or for only 1 segment, if we're not doing segmented printing):
+		- Call thebook.set_pages() to tell it what pages we're handling
+		- Call thebook.load_pages(), which loads the pages into memory and makes most of the requested changes
+		- Call thebook.make_booklet(), which combines those pages as a booklet (and if the user requested center widening, apply that change)
+		- Call thebook.rescale(), which (if the user requested a rescale/transform) rescales the output pages
+		- Write resulting output to {file/stdout}
+*/
+
+/*
+TODO:
+	- Delegate "segmented printing" calculations, etc print job specifications, to the Liesel::Book class
+	
+	- (Big change, hopeful) Implement "pure-PDF" modifications to save dramatically on resource use and execution time
+		At the moment, all pages are rendered by Poppler, and processed as images by GraphicsMagick
+		For some features (color threshold, etc), GraphicsMagick is strictly necessary
+		Ideally, we would only call GraphicsMagick when it's strictly necessary to do so,
+		and otherwise make modifications directly to the PDF without rendering it as an image first
+		
+		At the moment, I'm not sure how to do this. I'm not aware of a (FOSS) C++ library which can modify PDFs in this way (still looking)
+		
+		If this change was implemented, it would result in:
+			1. Much smaller output file size [since the pages wouldn't necessarily be converted to images]
+			2. Much faster execution speed   [since image processing is generally SLOW]
+			3. Much less RAM usage           [since images take up a lot of memory]
+			4. Much less CPU usage           [since image processing is rather intensive]
+*/
 
 #include "includes.h"
 
