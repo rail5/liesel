@@ -1,9 +1,9 @@
 /***************************************************************
  * Name:      liesel
- * Version:   11.0
+ * Version:   11.1
  * Author:    Andrew S. R. (rail5) (andrew@rail5.org)
  * Created:   2021-08-14
- * Updated:   2022-01-30
+ * Updated:   2022-02-11
  * Copyright: Andrew S. R. (rail5) (https://rail5.org)
  * License:   GNU GPL V3
  **************************************************************/
@@ -14,18 +14,20 @@ BASIC PROGRAM STRUCTURE:
 	
 	- Create instance of Liesel::Book class ("thebook")
 	- Read user input, validate user input, apply parameters to thebook.properties & thebook.printjob
-	- Calculate certain aspects of the print job (Printing in segments? If so, how many, etc)
-	- Then, for each segment (or for only 1 segment, if we're not doing segmented printing):
-		- Call thebook.set_pages() to tell it what pages we're handling
-		- Call thebook.load_pages(), which loads the pages into memory and makes most of the requested changes
-		- Call thebook.make_booklet(), which combines those pages as a booklet (and if the user requested center widening, apply that change)
-		- Call thebook.rescale(), which (if the user requested a rescale/transform) rescales the output pages
-		- Write resulting output to {file/stdout}
+	- Calculate certain aspects of the print job
+	- Call thebook.calculate_segments()
+	- Finally, call thebook.run_job(), which does:
+		For each segment (or for only 1 segment, if we're not doing segmented printing):
+			- Call thebook.set_pages() to tell it what pages we're handling
+			- Call thebook.load_pages(), which loads the pages into memory and makes most of the requested changes
+			- Call thebook.make_booklet(), which combines those pages as a booklet (and if the user requested center widening, apply that change)
+			- Call thebook.rescale(), which (if the user requested a rescale/transform) rescales the output pages
+			- Write resulting output to {file/stdout}
 */
 
 /*
 TODO:
-	- Delegate "segmented printing" calculations, etc print job specifications, to the Liesel::Book class
+	- Several fixes for newly-found bugs are in order
 	
 	- (Big change, hopeful) Implement "pure-PDF" modifications to save dramatically on resource use and execution time
 		At the moment, all pages are rendered by Poppler, and processed as images by GraphicsMagick
@@ -234,7 +236,7 @@ int main(int argc,char **argv)
 					return 1;
 				}
 				
-				minsize = stoi(optarg);
+				thebook.printjob.minsize = stoi(optarg);
 				break;
 			case 'd':
 				if (!is_number(optarg)) {
@@ -538,7 +540,7 @@ int main(int argc,char **argv)
 			
 			xmloutput = xmloutput + "<transform>" + stroutwidth + "x" + stroutheight + "</transform>\n";
 		}
-		xmloutput = xmloutput + "<minsize>" + to_string(minsize) + "</minsize>\n";
+		xmloutput = xmloutput + "<minsize>" + to_string(thebook.printjob.minsize) + "</minsize>\n";
 		xmloutput = xmloutput + "<quality>" + to_string(thebook.properties.quality) + "</quality>\n";
 		
 		xmloutput = xmloutput + "</settings>";
@@ -609,33 +611,12 @@ int main(int argc,char **argv)
 	Magick::InitializeMagick(*argv);
 
 	try {
-		if (rangeflag || exportflag) {
-			pagecount = thebook.selectedpages.size();
-		}
+		thebook.printjob.segmented = segflag;
+		thebook.printjob.segsize = segsize;
+		thebook.calculate_segments();
 		
-		if (segsize > pagecount || segsize == 0) {
-			segsize = pagecount;
-		}
-		
-		double dsegcount = (double)pagecount/segsize;
-		int segcount = ceil(dsegcount);
-		int finalsegsize = segsize;
-		
-		if (pagecount % segsize != 0) {
-			finalsegsize = pagecount % segsize;
-		}
-		
-		if (finalsegsize < minsize && segcount > 1) {
-			segcount = segcount - 1;
-			finalsegsize = (pagecount % segsize) + segsize;
-		}
-		
-		int thisseg = 1;
-		
-		int firstpage = 0;
-		
-		if (segcount > 1) {
-			if (checksegout(outstring, segcount, overwrite, pdfstdout) != true) {
+		if (thebook.printjob.segcount > 1) {
+			if (checksegout(outstring, thebook.printjob.segcount, overwrite, pdfstdout) != true) {
 				return 1;
 			}
 		}
@@ -645,141 +626,10 @@ int main(int argc,char **argv)
 			return 0;
 		}
 		
-		int revsegsize = segsize;
-		int revfinalsegsize = finalsegsize + (finalsegsize * thebook.properties.dividepages);
+		thebook.printjob.outfilename = outstring;
 		
-		if (segsize % 2 != 0) {
-			lastpageblank = true;
-			revsegsize = segsize + 1;
-		}
+		thebook.run_job(verbose, bookthief, pdfstdout);
 		
-		if (revfinalsegsize % 2 != 0 && !exportflag) {
-			flastpageblank = true;
-			revfinalsegsize = revfinalsegsize + 1;
-		}
-		
-		if (revsegsize % 4 != 0) {
-			extrablanks = true;
-		}
-		
-		if (revfinalsegsize % 4 != 0 && !exportflag) {
-			fextrablanks = true;
-		}
-		
-		while (thisseg < segcount) {
-			
-			firstpage = segsize*(thisseg-1);
-				
-			string newname = outstring.substr(0, outstring.size()-4) + "-part" + to_string(thisseg) + ".pdf";
-				
-			
-			thebook.printjob.finalpageblank = lastpageblank;
-			thebook.printjob.extrablanks = extrablanks;
-			thebook.printjob.segcount = segcount;
-			thebook.printjob.thisseg = thisseg;
-			thebook.printjob.startfrom = firstpage;
-			
-			thebook.printjob.endat = firstpage + segsize;
-
-			thebook.load_pages(verbose, bookthief);
-			
-			thebook.make_booklet(verbose, bookthief);
-			
-			thebook.rescale(verbose, bookthief);
-
-			thebook.pages.clear();
-			if (verbose && !pdfstdout) {
-				cout << endl << "Writing to file..." << endl;
-			}
-			if (!pdfstdout) {
-				writeImages(thebook.booklet.begin(), thebook.booklet.end(), newname);
-			} else {
-				Magick::Blob inmemory; // writeImages() will write to this Blob
-			
-				for (long unsigned int i=0;i<thebook.booklet.size();i++) {
-					thebook.booklet[i].magick("pdf"); // Explicitly set output type
-				}
-			
-				writeImages(thebook.booklet.begin(), thebook.booklet.end(), &inmemory, true); // Write to Blob
-			
-				unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
-		
-				for (long unsigned int i=0;i<inmemory.length();i++) {
-					printf("%c", rawpdfbytes[i]);
-				}
-		
-			}
-				
-				
-			thebook.booklet.clear(); // clear memory for the sake of the user's machine
-				
-				
-			double dpercentdone = (double)thisseg/segcount;
-			int percentdone = floor(dpercentdone * 100);
-			if (bookthief && !pdfstdout) {
-				cout << percentdone << "%" << endl;
-			}
-				
-			thisseg = thisseg + 1;
-		}
-			
-		firstpage = segsize*(thisseg-1);
-		
-		string appendtofname = ".pdf";
-		
-		if (segcount > 1) {
-			appendtofname = "-part" + to_string(thisseg) + ".pdf";
-		}
-		
-		string newname = outstring;
-
-		if (!exportflag) {
-			newname = outstring.substr(0, outstring.size()-4) + appendtofname;
-		}
-		
-		thebook.printjob.finalpageblank = flastpageblank;
-		thebook.printjob.extrablanks = fextrablanks;
-		thebook.printjob.segcount = segcount;
-		thebook.printjob.thisseg = thisseg;
-		thebook.printjob.startfrom = firstpage;
-		
-		thebook.printjob.endat = firstpage + finalsegsize;
-		
-		thebook.load_pages(verbose, bookthief);
-		
-		thebook.make_booklet(verbose, bookthief);
-		
-		thebook.rescale(verbose, bookthief);
-		
-		if (verbose && !pdfstdout) {
-			cout << endl << "Writing to file..." << endl;
-		}
-		
-		if (!pdfstdout) {
-			writeImages(thebook.booklet.begin(), thebook.booklet.end(), newname);
-		} else {
-			Magick::Blob inmemory; // writeImages() will write to this Blob
-			
-			for (long unsigned int i=0;i<thebook.booklet.size();i++) {
-				thebook.booklet[i].magick("pdf"); // Explicitly set output type
-			}
-			
-			writeImages(thebook.booklet.begin(), thebook.booklet.end(), &inmemory, true); // Write to Blob
-			
-			unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
-		
-			for (long unsigned int i=0;i<inmemory.length();i++) {
-				printf("%c", rawpdfbytes[i]);
-			}
-		
-		}
-		
-		if (bookthief && !pdfstdout) {
-			cout << "100%" << endl;
-		}
-		if (!pdfstdout) {
-			cout << "Done!" << endl;
-		}
 		return 0;
 		
 	}

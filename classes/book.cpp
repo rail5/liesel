@@ -108,6 +108,151 @@ bool Liesel::Book::set_pages(bool rangeflag, string rangevalue) {
 	return true;
 }
 
+void Liesel::Book::calculate_segments() {
+	int pgcount = selectedpages.size();
+	
+	if (printjob.segsize > pgcount || printjob.segsize == 0) {
+		printjob.segsize = pgcount;
+	}
+	
+	double rdsegcount = (double)pgcount/printjob.segsize;
+	printjob.segcount = ceil(rdsegcount);
+	
+	printjob.finalsegsize = printjob.segsize;
+	
+	if (pgcount % printjob.segsize != 0) {
+		printjob.finalsegsize = pgcount % printjob.segsize;
+	}
+	
+	if (printjob.finalsegsize < printjob.minsize && printjob.segcount > 1) {
+		printjob.segcount = printjob.segcount - 1;
+		printjob.finalsegsize = (pgcount % printjob.segsize) + printjob.segsize;
+	}
+	
+	printjob.thisseg = 1;
+	printjob.startfrom = 0;
+	
+	/* Keep outfile sanity checks in liesel.cpp */
+	
+	/* Same goes for checkflag */
+	
+	int revisedsegsize = printjob.segsize;
+	int revisedfinalsegsize = printjob.finalsegsize + (printjob.finalsegsize * properties.dividepages);
+	
+	if (printjob.segsize % 2 != 0) {
+		printjob.finalpageblank = true;
+		revisedsegsize = printjob.segsize + 1;
+	}
+	
+	if (revisedfinalsegsize % 2 != 0 && !printjob.previewonly) {
+		printjob.ffinalpageblank = true;
+		revisedfinalsegsize = revisedfinalsegsize + 1;
+	}
+	
+	if (revisedsegsize % 4 != 0) {
+		printjob.extrablanks = true;
+	}
+	
+	if (revisedfinalsegsize % 4 != 0 && !printjob.previewonly) {
+		printjob.fextrablanks = true;
+	}
+}
+
+void Liesel::Book::run_job(bool verbose, bool bookthief, bool pdfstdout) {
+	while (printjob.thisseg < printjob.segcount) {
+		printjob.startfrom = printjob.segsize*(printjob.thisseg-1);
+		
+		string newname = printjob.outfilename.substr(0, printjob.outfilename.size()-4) + "-part" + to_string(printjob.thisseg) + ".pdf";
+		
+		printjob.endat = printjob.startfrom + printjob.segsize;
+		
+		load_pages(verbose, bookthief);
+		make_booklet(verbose, bookthief);
+		rescale(verbose, bookthief);
+		
+		pages.clear();
+		if (!pdfstdout) {
+			if (verbose) {
+				cout << endl << "Writing to file..." << endl;
+			}
+			writeImages(booklet.begin(), booklet.end(), newname);
+			
+			double dpercentdone = (double)printjob.thisseg/printjob.segcount;
+			int percentdone = floor(dpercentdone * 100);
+			
+			if (bookthief) {
+				cout << percentdone << "%" << endl;
+			}
+		} else {
+			Magick::Blob inmemory; // writeImages() will write to this Blob
+			
+			for (long unsigned int i=0;i<booklet.size();i++) {
+				booklet[i].magick("pdf"); // Explicitly set output type
+			}
+			
+			writeImages(booklet.begin(), booklet.end(), &inmemory, true); // Write to the Blob
+			
+			unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
+			
+			for (long unsigned int i=0;i<inmemory.length();i++) {
+				printf("%c", rawpdfbytes[i]);
+			}
+		}
+		
+		booklet.clear();
+		printjob.thisseg = printjob.thisseg + 1;
+	}
+	
+	printjob.startfrom = printjob.segsize*(printjob.thisseg-1);
+	
+	string appendtofname = ".pdf";
+	
+	if (printjob.segcount > 1) {
+		appendtofname = "-part" + to_string(printjob.thisseg) + ".pdf";
+	}
+	
+	string newname = printjob.outfilename;
+	
+	if (!printjob.previewonly) {
+		newname = printjob.outfilename.substr(0, printjob.outfilename.size()-4) + appendtofname;
+	}
+	
+	printjob.finalpageblank = printjob.ffinalpageblank;
+	printjob.extrablanks = printjob.fextrablanks;
+	printjob.endat = printjob.startfrom + printjob.finalsegsize;
+	
+	load_pages(verbose, bookthief);
+	make_booklet(verbose, bookthief);
+	rescale(verbose, bookthief);
+	
+	if (!pdfstdout) {
+		if (verbose) {
+			cout << endl << "Writing to file..." << endl;
+		}
+		
+		writeImages(booklet.begin(), booklet.end(), newname);
+		
+		if (bookthief) {
+			cout << "100%" << endl;
+		}
+		cout << "Done!" << endl;
+	} else {
+		Magick::Blob inmemory;
+		
+		for (long unsigned int i=0;i<booklet.size();i++) {
+			booklet[i].magick("pdf");
+		}
+		
+		writeImages(booklet.begin(), booklet.end(), &inmemory, true);
+		
+		unsigned char* rawpdfbytes = (unsigned char*)inmemory.data();
+		
+		for (long unsigned int i=0;i<inmemory.length();i++) {
+			printf("%c", rawpdfbytes[i]);
+		}
+	}
+}
+
 void Liesel::Book::display_progress(int progress, int stage) {
 	int number_of_stages = 2 + (1*printjob.rescaling);
 	int progcounter = (progress / number_of_stages) + ((stage - 1) * (100 / number_of_stages)); // Calculate initial value
