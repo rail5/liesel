@@ -135,27 +135,6 @@ void Liesel::Book::calculate_segments() {
 	/* Keep outfile sanity checks in liesel.cpp */
 	
 	/* Same goes for checkflag */
-	
-	int revisedsegsize = printjob.segsize;
-	int revisedfinalsegsize = printjob.finalsegsize + (printjob.finalsegsize * properties.dividepages);
-	
-	if (printjob.segsize % 2 != 0) {
-		printjob.finalpageblank = true;
-		revisedsegsize = printjob.segsize + 1;
-	}
-	
-	if (revisedfinalsegsize % 2 != 0 && !printjob.previewonly) {
-		printjob.ffinalpageblank = true;
-		revisedfinalsegsize = revisedfinalsegsize + 1;
-	}
-	
-	if (revisedsegsize % 4 != 0) {
-		printjob.extrablanks = true;
-	}
-	
-	if (revisedfinalsegsize % 4 != 0 && !printjob.previewonly) {
-		printjob.fextrablanks = true;
-	}
 }
 
 void Liesel::Book::run_job(bool verbose, bool bookthief, bool pdfstdout) {
@@ -216,9 +195,7 @@ void Liesel::Book::run_job(bool verbose, bool bookthief, bool pdfstdout) {
 	if (!printjob.previewonly) {
 		newname = printjob.outfilename.substr(0, printjob.outfilename.size()-4) + appendtofname;
 	}
-	
-	printjob.finalpageblank = printjob.ffinalpageblank;
-	printjob.extrablanks = printjob.fextrablanks;
+
 	printjob.endat = printjob.startfrom + printjob.finalsegsize;
 	
 	load_pages(verbose, bookthief);
@@ -365,32 +342,38 @@ void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 		}
 	}
 	
-	if (printjob.finalpageblank || printjob.extrablanks) {
-		size_t width = pages[0].columns();
-		size_t height = pages[0].rows();
-		
-		Magick::Geometry blanksize = Magick::Geometry(width, height);
-		
-		Magick::Color blankcolor(MaxRGB, MaxRGB, MaxRGB, 0);
-		
-		Magick::Image blank_image(blanksize, blankcolor);
-		
-		if (printjob.finalpageblank) {
-			pages.push_back(blank_image);
-			if (verbose) {
-				cout << endl << "Blank page added to make an even number" << endl;
-			}
-		}
-		
-		if (printjob.extrablanks) {
-			pages.push_back(blank_image);
-			pages.push_back(blank_image);
-			if (verbose) {
-				cout << endl << "Two blank pages added to make divisible by 4" << endl;
-			}
+	size_t width = pages[0].columns();
+	size_t height = pages[0].rows();
+	
+	Magick::Geometry blanksize = Magick::Geometry(width, height);
+	
+	Magick::Color blankcolor(MaxRGB, MaxRGB, MaxRGB, 0);
+	
+	Magick::Image blank_image(blanksize, blankcolor);
+	
+	int current_total = pages.size();
+	int number_of_blanks = 0;
+	
+	if (current_total % 2 != 0) {
+		number_of_blanks = number_of_blanks + 1;
+		current_total = current_total + 1;
+		if (verbose) {
+			cout << endl << "Blank page added to make an even number" << endl;
 		}
 	}
 	
+	if (current_total % 4 != 0) {
+		number_of_blanks = number_of_blanks + 2;
+		// No further need to update current_total
+		if (verbose) {
+			cout << endl << "Two blank pages added to make divisible by 4" << endl;
+		}
+	}
+	
+	for (int appending=0;appending<number_of_blanks;appending++) {
+		pages.push_back(blank_image);
+	}
+
 	if (verbose) {
 		cout << endl << "All pages loaded" << endl;
 	}

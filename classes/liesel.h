@@ -23,11 +23,6 @@ namespace Liesel {
 			};
 			
 			struct job {
-				bool finalpageblank = false;
-				bool extrablanks = false;
-				bool ffinalpageblank = false;
-				bool fextrablanks = false;
-				
 				bool landscapeflip = false;
 				bool previewonly = false;
 				bool rescaling = false;
@@ -94,14 +89,6 @@ namespace Liesel {
 			struct job printjob;
 			/**********
 				Struct detailing the current print job
-				
-				printjob.finalpageblank : boolean = do we need to add a blank page to make an even number?
-				
-				printjob.extrablanks : boolean = do we need to add 2 blank pages to make the count divisible by 4?
-					
-					if both finalpageblank & extrablanks == true, 3 blanks will be appended
-				
-				printjob.ffinalpageblank && printjob.fextrablanks : booleans = ditto, but for the final segment
 				
 				printjob.landscapeflip : boolean = should we flip every other page 180 degrees? (for long-edge [standard] duplex printing)
 				

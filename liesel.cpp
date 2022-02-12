@@ -1,6 +1,6 @@
 /***************************************************************
  * Name:      liesel
- * Version:   11.1
+ * Version:   11.2
  * Author:    Andrew S. R. (rail5) (andrew@rail5.org)
  * Created:   2021-08-14
  * Updated:   2022-02-11
@@ -71,10 +71,6 @@ int main(int argc,char **argv)
 	bool checkflag = false;
 	bool verbose = false;
 	bool bookthief = false;
-	bool lastpageblank = false;
-	bool flastpageblank = false;
-	bool extrablanks = false;
-	bool fextrablanks = false;
 	
 	bool exportflag = false;
 	
@@ -100,8 +96,6 @@ int main(int argc,char **argv)
 	string crop = "0,0,0,0";
 
 	int segsize = 0;
-	
-	int minsize = 4;
 	
 	map<string, double> widthpresets;
 	map<string, double> heightpresets;
