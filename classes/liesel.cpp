@@ -218,7 +218,7 @@ void Liesel::Book::run_job(bool verbose, bool bookthief, bool pdfstdout) {
 }
 
 void Liesel::Book::display_progress(int progress, int stage) {
-	int number_of_stages = 2 + (1*printjob.rescaling);
+	int number_of_stages = 2; // "Rescaling" is made obsolete with this change
 	int progcounter = (progress / number_of_stages) + ((stage - 1) * (100 / number_of_stages)); // Calculate initial value
 	
 	progcounter = (progcounter / printjob.segcount) + ((printjob.thisseg - 1) * (100 / printjob.segcount)); // Divide it, based on the number of segments
