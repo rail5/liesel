@@ -5,7 +5,7 @@ liesel (11.1) focal; urgency=low
   to write the output PDFs. Also as a result, Liesel
   no longer cross-compiles to Windows
 
- -- rail5 <andrew@rail5.org>  Tue, 8 Mar 2022 01:08:40 -050
+ -- rail5 <andrew@rail5.org>  Tue, 8 Mar 2022 01:08:40 -0500
 
 liesel (11.0) focal; urgency=low
 
