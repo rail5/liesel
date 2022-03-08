@@ -7,6 +7,8 @@ namespace Liesel {
 		private:
 			poppler::document* document;
 			
+			Hans::Document lhdoc;
+			
 			struct props {
 				bool grayscale = false;
 				bool alterthreshold = false;

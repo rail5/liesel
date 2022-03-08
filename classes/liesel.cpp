@@ -154,7 +154,9 @@ void Liesel::Book::run_job(bool verbose, bool bookthief, bool pdfstdout) {
 			if (verbose) {
 				cout << endl << "Writing to file..." << endl;
 			}
-			writeImages(booklet.begin(), booklet.end(), newname);
+		
+			lhdoc.lhdoc_from_image_vector(booklet);
+			lhdoc.write_to_file(newname);
 			
 			double dpercentdone = (double)printjob.thisseg/printjob.segcount;
 			int percentdone = floor(dpercentdone * 100);
@@ -163,20 +165,10 @@ void Liesel::Book::run_job(bool verbose, bool bookthief, bool pdfstdout) {
 				cout << percentdone << "%" << endl;
 			}
 		} else {
-			Magick::Blob inmemory; // writeImages() will write to this Blob
-			
-			for (long unsigned int i=0;i<booklet.size();i++) {
-				booklet[i].magick("pdf"); // Explicitly set output type
-			}
-			
-			writeImages(booklet.begin(), booklet.end(), &inmemory, true); // Write to the Blob
-			
-			unsigned char* rawpdfbytes = (unsigned char*)inmemory.data(); // Access the bytes of the Blob
-			
-			for (long unsigned int i=0;i<inmemory.length();i++) {
-				printf("%c", rawpdfbytes[i]);
-			}
+			lhdoc.lhdoc_from_image_vector(booklet);
+			lhdoc.write_to_stdout();
 		}
+			
 		
 		booklet.clear();
 		printjob.thisseg = printjob.thisseg + 1;
@@ -207,26 +199,21 @@ void Liesel::Book::run_job(bool verbose, bool bookthief, bool pdfstdout) {
 			cout << endl << "Writing to file..." << endl;
 		}
 		
-		writeImages(booklet.begin(), booklet.end(), newname);
+		if (printjob.previewonly) {
+			writeImages(booklet.begin(), booklet.end(), newname); // Use GraphicsMagick for 'export preview JPEG'
+			return;
+		}
+		
+		lhdoc.lhdoc_from_image_vector(booklet);
+		lhdoc.write_to_file(newname);
 		
 		if (bookthief) {
 			cout << "100%" << endl;
 		}
 		cout << "Done!" << endl;
 	} else {
-		Magick::Blob inmemory;
-		
-		for (long unsigned int i=0;i<booklet.size();i++) {
-			booklet[i].magick("pdf");
-		}
-		
-		writeImages(booklet.begin(), booklet.end(), &inmemory, true);
-		
-		unsigned char* rawpdfbytes = (unsigned char*)inmemory.data();
-		
-		for (long unsigned int i=0;i<inmemory.length();i++) {
-			printf("%c", rawpdfbytes[i]);
-		}
+		lhdoc.lhdoc_from_image_vector(booklet);
+		lhdoc.write_to_stdout();
 	}
 }
 
@@ -354,7 +341,7 @@ void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 	int current_total = pages.size();
 	int number_of_blanks = 0;
 	
-	if (current_total % 2 != 0) {
+	if (current_total % 2 != 0 && !printjob.previewonly) {
 		number_of_blanks = number_of_blanks + 1;
 		current_total = current_total + 1;
 		if (verbose) {
@@ -362,7 +349,7 @@ void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 		}
 	}
 	
-	if (current_total % 4 != 0) {
+	if (current_total % 4 != 0 && !printjob.previewonly) {
 		number_of_blanks = number_of_blanks + 2;
 		// No further need to update current_total
 		if (verbose) {
@@ -565,63 +552,32 @@ void Liesel::Book::make_booklet(bool verbose, bool bookthief) {
 }
 
 void Liesel::Book::rescale(bool verbose, bool bookthief) {
-	int finalpagecount = booklet.size();
-	
 	size_t width = booklet[0].columns();
 	size_t height = booklet[0].rows();
 	
+	width = (properties.quality / 72) * width;
+	height = (properties.quality / 72) * height;
+	
 	if (printjob.rescaling) {
-		size_t newwidth = width;
-		size_t newheight = height;
-		
-		size_t widthmults[10];
-		size_t heightmults[10];
-		
-		for (int x=0;x<10;x++) {
-			widthmults[x] = (x+1)*(properties.quality*printjob.rescale_width);
-			heightmults[x] = (x+1)*(properties.quality*printjob.rescale_height);
-		}
-		
-		int i = 0;
-		while (i < 10) {
-			if ((width <= widthmults[i]) || (height <= heightmults[i])) {
-				newwidth = widthmults[i];
-				newheight = heightmults[i]; // Scale up by preference
-				if (verbose) {
-					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
-				}
-				break;
-			}
-			
-			if ((width - widthmults[i] >= 200) || (height - heightmults[i] >= 200)) {
-				i = i + 1;
-			} else {
-				newwidth = widthmults[i];
-				newheight = heightmults[i];
-				if (verbose) {
-					cout << endl << "Rescaling to " << newwidth << "x" << newheight << endl;
-				}
-				break;
-			}
-		}
-		
-		Magick::Geometry newsize = Magick::Geometry(newwidth, newheight);
-		newsize.aspect(true);
-		
-		for (int y=0;y<finalpagecount;y++) {
-			if (verbose) {
-				cout << "Rescaling page " << y+1 << "... " << flush;
-			}
-			if (bookthief) {
-				double dprog = (double)(y + 1)/(finalpagecount + 1)*100;
-				int prog = floor(dprog);
-				display_progress(prog, 3);
-			}
-			
-			booklet[y].resize(newsize);
-			booklet[y].rotate(-90*printjob.previewonly); // Rotate -90*0 = 0 if not previewonly, -90*1 = -90 if previewonly
-		}
+		width = 72*printjob.rescale_width;
+		height = 72*printjob.rescale_height;
 	}
+	
+	lhdoc.width = width;
+	lhdoc.height = height;
+	
+	if (printjob.previewonly) {
+	
+		if (printjob.rescaling) {
+	
+			Magick::Geometry magick_rescaled(100*printjob.rescale_width, 100*printjob.rescale_height);
+			magick_rescaled.aspect(true);
+			booklet[0].resize(magick_rescaled);
+		}
+		
+		booklet[0].rotate(-90);
+	}
+	
 }
 
 Liesel::Book Liesel::load_book(const string &input, bool pdfstdin, bool speak) {
