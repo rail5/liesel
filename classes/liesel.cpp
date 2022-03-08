@@ -573,9 +573,8 @@ void Liesel::Book::rescale(bool verbose, bool bookthief) {
 			Magick::Geometry magick_rescaled(100*printjob.rescale_width, 100*printjob.rescale_height);
 			magick_rescaled.aspect(true);
 			booklet[0].resize(magick_rescaled);
+			booklet[0].rotate(-90);
 		}
-		
-		booklet[0].rotate(-90);
 	}
 	
 }
