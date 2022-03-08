@@ -43,7 +43,7 @@ The manpage and *liesel -h* will provide a comprehensive list of options and how
 
 ## Installation
 
-64-bit .deb packages & Windows binaries are provided in the "Releases" section
+64-bit .deb packages are provided in the "Releases" section
 
 
 On Ubuntu-based distros, Liesel can be easily installed via the BookThief PPA:

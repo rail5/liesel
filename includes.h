@@ -14,7 +14,7 @@
 #include <cctype>
 #include <string>
 
-/* Liesel dependencies: GraphicsMagick + Poppler */
+/* Liesel dependencies: GraphicsMagick, Poppler + Haru */
 #include <Magick++.h>
 
 #include <poppler/cpp/poppler-global.h>
@@ -22,6 +22,8 @@
 #include <poppler/cpp/poppler-page.h>
 #include <poppler/cpp/poppler-image.h>
 #include <poppler/cpp/poppler-page-renderer.h>
+
+#include <hpdf.h>
 
 /* Custom/general includes */
 #include "functions/general/explode.cpp" // Explodes string into vector<string> using arbitrary given delimiter (ie, "8.5x11" exploded by delimiter 'x' returns vector[0] = "8.5", vector[1] = "11")
@@ -34,7 +36,8 @@
 
 
 /* Classes */
-#include "classes/book.cpp"
+#include "classes/hans.cpp" // Bare-bones C++ wrapper for libHaru
+#include "classes/liesel.cpp" // The Liesel namespace & its Book class
 
 /* Liesel-specific includes */
 #include "functions/btfunctions/checksegout.cpp" // bool Segmented output files don't already exist (unless -f is specified)

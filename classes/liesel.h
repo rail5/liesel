@@ -7,6 +7,8 @@ namespace Liesel {
 		private:
 			poppler::document* document;
 			
+			Hans::Document lhdoc;
+			
 			struct props {
 				bool grayscale = false;
 				bool alterthreshold = false;
@@ -23,21 +25,27 @@ namespace Liesel {
 			};
 			
 			struct job {
-				bool finalpageblank = false;
-				bool extrablanks = false;
 				bool landscapeflip = false;
 				bool previewonly = false;
 				bool rescaling = false;
 				bool linear_output = false;
-			
+				
+				bool segmented = false;
+				
+				int segsize = 1;
+				int finalsegsize = 1;
 				int segcount = 1;
 				
 				int thisseg = 1;
 				int startfrom = 1;
 				int endat = 1;
 				
+				int minsize = 4;
+				
 				double rescale_width = 0.0;
 				double rescale_height = 0.0;
+				
+				string outfilename = "";
 			};
 			
 		public:
@@ -84,24 +92,25 @@ namespace Liesel {
 			/**********
 				Struct detailing the current print job
 				
-				printjob.finalpageblank : boolean = do we need to add a blank page to make an even number?
-				
-				printjob.extrablanks : boolean = do we need to add 2 blank pages to make the count divisible by 4?
-					
-					if both finalpageblank & extrablanks == true, 3 blanks will be appended
-				
 				printjob.landscapeflip : boolean = should we flip every other page 180 degrees? (for long-edge [standard] duplex printing)
 				
 				printjob.previewonly : boolean = are we exporting a preview jpeg rather than processing a full PDF?
 				
 				printjob.rescaling : boolean = did the user request a transform/rescale?
 				
+				printjob.linear_output : boolean = did the user request linear output? (skip making a booklet, just apply requested changes)
+				
+				
+				printjob.segmented : boolean = are we doing segmented printing? (-s option)
+				
+				
+				printjob.segsize : integer = the number of pages per segment, if doing segmented printing
+				
+				printjob.finalsegsize : integer = the number of pages for the final segment (can be different to ordinary segments)
 				
 				printjob.segcount : integer = the total number of segments to be printed
 				
 				printjob.numstages : integer = the number of stages (2 normally (load + combine pages), 3 if we're doing a rescale)
-				
-				
 				
 				printjob.thisseg : integer = the current segment
 				
@@ -117,10 +126,14 @@ namespace Liesel {
 					
 				printjob.endat : integer = the index, within the selectedpages vector, at which this job is ending
 				
+				printjob.minsize : integer = absolute minimum segment size (if the final segment size is less than this number, the pages get tacked on to the penultimate segment, and the segment count is decremented by 1)
+				
 				
 				printjob.rescale_width : double = (if rescaling) output width
 				
 				printjob.rescale_height : double = (if rescaling) output height
+				
+				printjob.outfilename : string = the base output filename (if segmented, will replace '.pdf' with -part1.pdf, -part2.pdf, etc)
 			**********/
 	
 			bool load_document(const string &input, bool pdfstdin = false, bool speak = true);
@@ -157,6 +170,16 @@ namespace Liesel {
 				Only run AFTER load_document & count_pages, as this has to validate rangevalue against the document's pagecount
 				
 				Returns true on success, false on failure
+			**********/
+			
+			void calculate_segments();
+			/**********
+				If user specifies -s for segmented printing, calculates the total number of segments, if any blanks are needed, etc
+			**********/
+			
+			void run_job(bool verbose, bool bookthief, bool pdfstdout);
+			/**********
+				Runs the actual print job (load_pages, make_booklet, rescale, and write to file/stdout)
 			**********/
 			
 			void display_progress(int progress, int stage);
