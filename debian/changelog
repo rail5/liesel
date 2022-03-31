@@ -1,3 +1,9 @@
+liesel (11.2) focal; urgency=low
+
+  * Patched a bug in export preview
+
+ -- rail5 <andrew@rail5.org>  Thu, 31 Mar 2022 17:50:13 -0400
+
 liesel (11.1) focal; urgency=low
 
   * Patched a series of bugs listed on github
