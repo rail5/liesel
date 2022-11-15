@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <cctype>
 #include <string>
+#include <array>
 
 /* Liesel dependencies: GraphicsMagick, Poppler + Haru */
 #include <Magick++.h>

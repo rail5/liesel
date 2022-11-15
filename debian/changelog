@@ -1,3 +1,9 @@
+liesel (11.3) focal; urgency=low
+
+  * Liesel can now compile on MacOS
+
+ -- rail5 <andrew@rail5.org>  Tue, 15 Nov 2022 16:55:33 -0500
+
 liesel (11.2) focal; urgency=low
 
   * Patched a bug in export preview
