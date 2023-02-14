@@ -334,7 +334,7 @@ void Liesel::Book::load_pages(bool verbose, bool bookthief) {
 	
 	Magick::Geometry blanksize = Magick::Geometry(width, height);
 	
-	Magick::Color blankcolor(MaxRGB, MaxRGB, MaxRGB, 0);
+	Magick::Color blankcolor("white");
 	
 	Magick::Image blank_image(blanksize, blankcolor);
 	
@@ -385,7 +385,7 @@ void Liesel::Book::make_booklet(bool verbose, bool bookthief) {
 	int local_widenby = properties.widenby;
 	
 	Magick::Geometry blanksize = Magick::Geometry(50, 50);
-	Magick::Color blankcolor(MaxRGB, MaxRGB, MaxRGB, 0);
+	Magick::Color blankcolor("white");
 	
 	while (first <= (relevantpagecountfromzero / 2)) {
 		Magick::Image newimg(blanksize, blankcolor);
