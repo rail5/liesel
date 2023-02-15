@@ -1,8 +1,10 @@
 # liesel
 
-Liesel prepares ordinary PDFs to be home-printed in pamphlet/booklet form
+Liesel turns ordinary PDFs into pamphlets/booklets which can be printed at home
 
 This is **free software** (GNU GPL 3), and you are welcome to redistribute it under certain conditions.
+
+![Demonstration](./liesel.gif)
 
 ## Features
 
