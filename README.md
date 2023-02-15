@@ -75,14 +75,20 @@ make
 sudo make install
 ```
 
+## Supported Systems
+
 Liesel is currently tested & verified to successfully build & run on:
 
  - GNU/Linux
- - MacOS
- - OpenBSD
- - Windows*
+ - MacOS*
+ - OpenBSD**
+ - Windows***
 
-*The Windows binaries must be compiled from GNU/Linux. Binaries for all other systems can be compiled from those systems themselves. See [autobuild](https://github.com/rail5/autobuild) for a script to automate the build process for GNU/Linux and Windows binaries
+*Run 'make macos'
+
+**On OpenBSD, 'gmake' (GNU make) must be used rather than the default 'make'. Run 'gmake openbsd'
+
+***The Windows binaries must be compiled from GNU/Linux. Binaries for all other systems can be compiled from those systems themselves. See [autobuild](https://github.com/rail5/autobuild) for a script to automate the build process for GNU/Linux and Windows binaries
 
 ## Some small notes
 
