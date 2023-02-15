@@ -19,37 +19,34 @@ All listed features are optional. A simple command like *liesel -i somebook.pdf 
 
 Liesel also comes with a *manual page* to help guide you through some more advanced options. You can view it, after installing Liesel, by running **man liesel** in your terminal
 
+Here are just a few available options:
 
  - Range input (i.e, process only the specified pages) (Example: *-r 1-5,7-10,3,20,100-90*)
 
  - Segmented output (produce multiple PDFs in segments of any given length (e.g, 40 pages per segment), to be more manageable when printed) (Example: *-s 40*)
  
- - Color-to-grayscale conversion (*-g*)
+ - Convert to grayscale (*-g*)
 
- - Automatic "landscape"/"long-edge" flipping (*-l*)
+ - Automatic "duplex" flipping (*-l*)
  
- - Specify arbitrary PPI / quality (Example: *-d 175*)
+ - Specify PPI / quality (Example: *-d 175*)
  
- - Transform/resize output PDF to print on any given paper size (Example: *-t 8.5x11*)
+ - Rescale output PDF to print on any arbitrary paper size (Example: *-t 8.5x11*)
 
- - Export preview before running command (Example: *-e 5,6 -o preview.jpeg*)
-
- - Crop PDF pages (Example: *-C 10,20,30,40* crops 10% from the left, 20% from the right, 30% from the top, 40% from the bottom)
+ - Crop PDF pages (Example: *-C percentage-to-crop-from-the-left,right,top,bottom*, ie *-C 10,20,30,40*)
 
  - Convert to pure black-and-white (Not grayscale) (Example: *-k 50* changes every pixel under 50% brightness to black, every pixel over 50% to white)
 
  - Widen center margins (add blank space between left and right-hand sides) (Example: *-w 20*)
 
- - Auto-widen center margins (*progressively* add blank space between left and right-hand sides, wider toward the middle of the booklet) (Example: *-a* or *-a 50*)
-
  - Divide each page into two pages (for example, if the PDF is a scanned book with left and right-hand pages not separated) (*-D*)
 
-The manpage and *liesel -h* will provide a comprehensive list of options and how to use them
+The manpage and *liesel -h* will provide a comprehensive list of all options and how to use them
 
 
 ## Installation
 
-64-bit .deb packages are provided in the "Releases" section
+64-bit .deb packages and Windows binaries are provided in the "Releases" section
 
 
 On Ubuntu-based distros, Liesel can be easily installed via the BookThief PPA:
@@ -62,11 +59,11 @@ sudo apt-get install liesel
 
 ## Build Requirements
 
-- Magick++ API (Packages: **graphicsmagick-libmagick-dev-compat** & **libmagick++-6-headers**)
+- Magick++ API (Debian Packages: **graphicsmagick-libmagick-dev-compat** & **libmagick++-6-headers**)
 
-- libfontconfig1 (Package: **libfontconfig1-dev**)
+- libfontconfig1 (Debian Package: **libfontconfig1-dev**)
 
-- Poppler (Package: **libpoppler-cpp-dev**)
+- Poppler (Debian Package: **libpoppler-cpp-dev**)
 
 ## Building
 
