@@ -75,6 +75,15 @@ make
 sudo make install
 ```
 
+Liesel is currently tested & verified to successfully build & run on:
+
+ - GNU/Linux
+ - MacOS
+ - OpenBSD
+ - Windows*
+
+*The Windows binaries must be compiled from GNU/Linux. Binaries for all other systems can be compiled from those systems themselves. See [autobuild](https://github.com/rail5/autobuild) for a script to automate the build process for GNU/Linux and Windows binaries
+
 ## Some small notes
 
 To print like this, of course, the pages have to go in a certain order. That order is:
