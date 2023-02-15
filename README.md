@@ -8,13 +8,17 @@ This is **free software** (GNU GPL 3), and you are welcome to redistribute it un
 
 ## Features
 
-*Note: Liesel is a* **command-line** *program. For a GUI front-end, see BookThief*
+*Note: Liesel is a* **command-line** *program. For a GUI front-end, see [BookThief](https://github.com/rail5/bookthief)*
 
 Liesel will take any ordinary PDF (for example, an e-book) and combine/arrange the pages so that when the output PDF is printed, the entire stack of papers can just be folded in half to produce a booklet.
+
+![Like this](https://cdn.zmescience.com/wp-content/uploads/2014/07/folding_paper.jpg)
 
 This prints 2 pages per 1 side of a sheet of paper, and therefore 4 pages per sheet of paper.
 
 All listed features are optional. A simple command like *liesel -i somebook.pdf -o booklet.pdf* will of course work just fine
+
+Liesel also comes with a *manual page* to help guide you through some more advanced options. You can view it, after installing Liesel, by running **man liesel** in your terminal
 
  - Range input (i.e, process only the specified pages) (Example: *-r 1-5,7-10,3,20,100-90*)
 
