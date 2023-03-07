@@ -1,12 +1,31 @@
 # liesel
 
-Liesel turns ordinary PDFs into pamphlets/booklets which can be printed at home
+Liesel turns ordinary PDFs into pamphlets/booklets which can be printed at home.
+
+
+> Rudy said, "You know something, Liesel, I was thinking. You’re not a thief at all. Stealing is what the army does. Taking your father, and mine."
+>
+> He kicked a stone and it clanged against a gate. He walked faster.
+>
+> "All those rich Nazis up there, on Grande Strasse, Gelb Strasse, Heide Strasse. How does it feel anyway?"
+>
+> "How does what feel?"
+>
+> "When you take one of those books?"
+>
+> At that moment, she chose to keep still. If he wanted an answer, he'd have to come back, and he did.
+>
+> "Well?" he asked, but again, it was Rudy who answered, before Liesel could even open her mouth.
+>
+> "It feels good, doesn't it? To steal something back."
+
+– Markus Zusak's "The Book Thief"
+
+## About
 
 This is **free software** (GNU GPL 3), and you are welcome to redistribute it under certain conditions.
 
 ![Demonstration](./liesel.gif)
-
-## Features
 
 *Note: Liesel is a* **command-line** *program. For a GUI front-end, see [BookThief](https://github.com/rail5/bookthief)*
 
@@ -14,6 +33,7 @@ Liesel will take any ordinary PDF (for example, an e-book) and combine/arrange t
 
 ![Like this](https://cdn.zmescience.com/wp-content/uploads/2014/07/folding_paper.jpg)
 
+## Features
 
 All listed features are optional. A simple command like *liesel -i somebook.pdf -o booklet.pdf* will of course work just fine
 
