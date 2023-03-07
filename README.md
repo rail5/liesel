@@ -3,11 +3,7 @@
 Liesel turns ordinary PDFs into pamphlets/booklets which can be printed at home.
 
 
-> Rudy said, "You know something, Liesel, I was thinking. You’re not a thief at all. Stealing is what the army does. Taking your father, and mine."
->
-> He kicked a stone and it clanged against a gate. He walked faster.
->
-> "All those rich Nazis up there, on Grande Strasse, Gelb Strasse, Heide Strasse. How does it feel anyway?"
+> Rudy said, "You know something, Liesel, I was thinking. You’re not a thief at all. Stealing is what the army does. Taking your father, and mine." He kicked a stone and it clanged against a gate. He walked faster. "All those rich Nazis up there, on Grande Strasse, Gelb Strasse, Heide Strasse. How does it feel anyway?"
 >
 > "How does what feel?"
 >
