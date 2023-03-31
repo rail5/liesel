@@ -19,9 +19,6 @@ Liesel turns ordinary PDFs into pamphlets/booklets which can be printed at home.
 
 ## Installation
 
-64-bit .deb packages are provided in the "Releases" section
-
-
 On **Ubuntu-based** distros, Liesel can be easily installed via the BookThief PPA:
 
 ```
