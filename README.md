@@ -17,6 +17,28 @@ Liesel turns ordinary PDFs into pamphlets/booklets which can be printed at home.
 
 – Markus Zusak's "The Book Thief"
 
+## Installation
+
+64-bit .deb packages and Windows binaries are provided in the "Releases" section
+
+
+On Ubuntu-based distros, Liesel can be easily installed via the BookThief PPA:
+
+```
+sudo add-apt-repository ppa:rail5/bookthief
+sudo apt-get update
+sudo apt-get install liesel
+```
+
+On **Debian GNU/Linux**, Liesel can be easily installed via the [deb.rail5.org](https://deb.rail5.org) repository:
+
+```
+sudo curl -s -o /etc/apt/trusted.gpg.d/rail5.gpg "https://deb.rail5.org/rail5.gpg"
+sudo curl -s -o /etc/apt/sources.list.d/rail5.list "https://deb.rail5.org/debian/rail5.list"
+sudo apt update
+sudo apt install liesel
+```
+
 ## About
 
 This is **free software** (GNU GPL 3), and you are welcome to redistribute it under certain conditions.
@@ -58,29 +80,6 @@ Here are just a few available options:
  - Divide each page into two pages (for example, if the PDF is a scanned book with left and right-hand pages not separated) (*-D*)
 
 The manpage and *liesel -h* will provide a comprehensive list of all options and how to use them
-
-
-## Installation
-
-64-bit .deb packages and Windows binaries are provided in the "Releases" section
-
-
-On Ubuntu-based distros, Liesel can be easily installed via the BookThief PPA:
-
-```
-sudo add-apt-repository ppa:rail5/bookthief
-sudo apt-get update
-sudo apt-get install liesel
-```
-
-On **Debian GNU/Linux**, Liesel can be easily installed via the [deb.rail5.org](https://deb.rail5.org) repository:
-
-```
-sudo curl -s -o /etc/apt/trusted.gpg.d/rail5.gpg "https://deb.rail5.org/rail5.gpg"
-sudo curl -s -o /etc/apt/sources.list.d/rail5.list "https://deb.rail5.org/debian/rail5.list"
-sudo apt update
-sudo apt install liesel
-```
 
 ## Build Requirements
 
