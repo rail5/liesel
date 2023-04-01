@@ -1,3 +1,9 @@
+liesel (11.3.2) bullseye; urgency=medium
+
+  * Adding i386 builds to deb.rail5.org
+
+ -- rail5 <andrew@rail5.org>  Fri, 31 Mar 2023 21:38:28 -0400
+
 liesel (11.3.1) focal; urgency=low
 
   * Liesel can now compile on OpenBSD
