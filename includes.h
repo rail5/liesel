@@ -9,7 +9,6 @@
 #include <memory>
 #include <vector>
 #include <sstream>
-#include <sys/stat.h>
 #include <algorithm>
 #include <cctype>
 #include <string>

@@ -10,13 +10,11 @@ inline bool file_exists(std::string name) {
 #else
 
 inline bool file_exists(const char *name) {
-	struct stat buffer;
-	return (stat (name, &buffer) == 0);
+	return (access(name, F_OK) != -1);
 }
 
 inline bool file_exists(std::string name) {
-	struct stat buffer;
-	return (stat (name.c_str(), &buffer) == 0);
+	return (access(name.c_str(), F_OK) != -1);
 }
 
 #endif
