@@ -16,6 +16,10 @@ openbsd:
 
 windows:
 	 $(CC) -Wl,--allow-multiple-definition -std=c++17 `$(PKG_CONFIG) --cflags GraphicsMagick++ poppler` -O2 -s -Wall -o liesel main.cpp -lfreetype -lfontconfig -ljpeg -lz `$(PKG_CONFIG) --libs GraphicsMagick++ poppler-cpp libopenjp2 libharu freetype2`
-	
+
 install:
 	install -m 0755 liesel /usr/bin
+
+clean:
+	rm -f liesel
+	rm -f liesel.exe
