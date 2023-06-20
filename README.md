@@ -1,3 +1,7 @@
+## total-rewrite
+
+In the process of rewriting Liesel entirely from scratch
+
 # liesel
 
 Liesel turns ordinary PDFs into pamphlets/booklets which can be printed at home.

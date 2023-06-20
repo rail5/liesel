@@ -1,3 +1,11 @@
+liesel (11.3.4) bullseye; urgency=medium
+
+  * Set libtiff6 and libwebp7 as usable alternatives
+  to libtiff5 and libwebp6 so that Liesel can now
+  be installed on Debian 12
+
+ -- rail5 <andrew@rail5.org>  Tue, 20 Jun 2023 14:09:47 -0400
+
 liesel (11.3.3) bullseye; urgency=medium
 
   * Patched a bug which prevented use of PDF files
