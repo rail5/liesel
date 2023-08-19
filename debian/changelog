@@ -1,3 +1,9 @@
+liesel (11.3.5) stable; urgency=medium
+
+  * Moving everything to Debian 12
+
+ -- rail5 <andrew@rail5.org>  Fri, 18 Aug 2023 23:13:29 -0400
+
 liesel (11.3.4) bullseye; urgency=medium
 
   * Set libtiff6 and libwebp7 as usable alternatives
