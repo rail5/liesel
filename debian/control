@@ -1,7 +1,7 @@
 Source: liesel
 Priority: optional
 Maintainer: rail5 <andrew@rail5.org>
-Build-Depends: debhelper (>= 8.0.0), graphicsmagick-libmagick-dev-compat, libmagick++-6-headers, libpoppler-cpp-dev (>= 0.86), libfontconfig1-dev, libhpdf-dev
+Build-Depends: debhelper (>= 8.0.0), graphicsmagick-libmagick-dev-compat, libmagick++-6-headers, libpoppler-cpp-dev (>= 0.86), libfontconfig-dev, libhpdf-dev
 Standards-Version: 3.9.3
 Section: utils
 
@@ -11,5 +11,5 @@ License: GPL-3.0
 Vendor: rail5 <andrew@rail5.org>
 Priority: optional
 Architecture: any
-Depends: libbsd0, libc6, libxcb1, liblzma5, libuuid1, libexpat1, libstdc++6, libgomp1, libzstd1, libxml2, libbz2-1.0, libx11-6, libxext6, libwmf0.2-7, libpng16-16, libtiff5 | libtiff6, liblcms2-2, libwebp6 | libwebp7, libwebpmux3, libjbig0, zlib1g, libjpeg-turbo8 | libjpeg62-turbo, libfontconfig1, libfreetype6, libpoppler-cpp0v5, libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12, libhpdf-2.3.0
+Depends: libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12, libhpdf-2.3.0, libpoppler-cpp0v5, libfontconfig1, ${misc:Depends}, ${shlibs:Depends}
 Description: Converts PDFs to booklets
