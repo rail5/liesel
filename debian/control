@@ -13,3 +13,4 @@ Priority: optional
 Architecture: any
 Depends: libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12, libhpdf-2.3.0, libpoppler-cpp0v5, libfontconfig1, ${misc:Depends}, ${shlibs:Depends}
 Description: Converts PDFs to booklets
+ Liesel transforms ordinary PDFs into booklets for home or professional printing
