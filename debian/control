@@ -1,7 +1,7 @@
 Source: liesel
 Priority: optional
 Maintainer: rail5 <andrew@rail5.org>
-Build-Depends: debhelper (>= 8.0.0), graphicsmagick-libmagick-dev-compat, libmagick++-6-headers, libpoppler-cpp-dev (>= 0.86), libfontconfig-dev, libhpdf-dev
+Build-Depends: debhelper (>= 10), graphicsmagick-libmagick-dev-compat, libmagick++-6-headers, libpoppler-cpp-dev (>= 0.86), libfontconfig-dev, libhpdf-dev
 Standards-Version: 3.9.3
 Section: utils
 
