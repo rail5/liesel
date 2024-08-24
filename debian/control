@@ -11,6 +11,6 @@ License: GPL-3.0
 Vendor: rail5 <andrew@rail5.org>
 Priority: optional
 Architecture: any
-Depends: libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12, libhpdf-2.3.0, libpoppler-cpp0v5, libfontconfig1, ${misc:Depends}, ${shlibs:Depends}
+Depends: libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12, libhpdf-2.3.0, libpoppler-cpp0v5, libfontconfig1, libc6, libgcc-s1, libstdc++6
 Description: Converts PDFs to booklets
  Liesel transforms ordinary PDFs into booklets for home or professional printing

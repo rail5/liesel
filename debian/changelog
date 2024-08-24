@@ -1,3 +1,16 @@
+liesel (11.3.8) unstable; urgency=medium
+
+  * Removed misc-depends from debian/control
+    This should allow liesel to install on Debian-based systems
+    which hold older (but still compatible) versions of shared
+    libraries (namely PopOS, which has been tested in QEMU)
+    If anyone knows Debian packages well enough to know how to
+    allow debhelper to do its job with misc-depends, while at
+    the same time not mandating "minimum version numbers" which
+    are outside of the maintainer's control, shoot me a message
+
+ -- rail5 <andrew@rail5.org>  Sat, 24 Aug 2024 13:57:17 +0800
+
 liesel (11.3.7) stable; urgency=medium
 
   * Cleaned up debian packaging
