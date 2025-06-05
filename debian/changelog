@@ -1,3 +1,15 @@
+liesel (11.3.9) unstable; urgency=medium
+
+  * Overhaul, Windows port
+    - Cleaned up help string
+    - Switched to higher-level std::filesystem access rather than stat()
+    - Pseudo-entry point for M$ Window$ (R) (TM) (C) since it doesn't
+    know how to handle UTF-8
+    I will never port my software to Window$ again.
+  * Dropped OpenBSD support
+
+ -- rail5 <andrew@rail5.org>  Thu, 05 Jun 2025 23:03:08 +0800
+
 liesel (11.3.8) unstable; urgency=medium
 
   * Removed misc-depends from debian/control
