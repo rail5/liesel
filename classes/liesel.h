@@ -18,7 +18,7 @@ namespace Liesel {
 				bool automargin = false;
 				
 				int quality = 100;
-				double threshold = ProxyMaxRGB / 2;
+				double threshold = MaxRGB / 2;
 				vector<int> cropvalues = {0, 0, 0, 0};
 				int widenby = 0;
 				int maxmargin = 0;
