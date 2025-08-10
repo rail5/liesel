@@ -1,7 +1,7 @@
 Source: liesel
 Priority: optional
 Maintainer: rail5 <andrew@rail5.org>
-Build-Depends: debhelper (>= 10), graphicsmagick-libmagick-dev-compat, libmagick++-6-headers, libpoppler-cpp-dev (>= 0.86), libfontconfig-dev, libhpdf-dev
+Build-Depends: debhelper (>= 10), graphicsmagick-libmagick-dev-compat, libpoppler-cpp-dev (>= 0.86), libfontconfig-dev, libhpdf-dev
 Standards-Version: 3.9.3
 Section: utils
 
@@ -11,6 +11,6 @@ License: GPL-3.0
 Vendor: rail5 <andrew@rail5.org>
 Priority: optional
 Architecture: any
-Depends: libgraphicsmagick-q16-3, libgraphicsmagick++-q16-12, libhpdf-2.3.0, libpoppler-cpp0v5, libfontconfig1, libc6, libgcc-s1, libstdc++6
+Depends: libgraphicsmagick-q16-3 | libgraphicsmagick-q16-3t64, libgraphicsmagick++-q16-12 | libgraphicsmagick++-q16-12t64, libhpdf-2.3.0, libpoppler-cpp0v5 | libpoppler-cpp2, libfontconfig1, libc6, libgcc-s1, libstdc++6
 Description: Converts PDFs to booklets
  Liesel transforms ordinary PDFs into booklets for home or professional printing
